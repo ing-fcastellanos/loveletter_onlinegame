@@ -30,7 +30,37 @@
 
 ## 6. Verificación
 
-- [ ] 6.1 En un clon limpio: `npm install`, `npm run lint`, `npm run format:check`, `npm run typecheck` y `npm test` pasan; pegar la salida real.
-- [ ] 6.2 Confirmar contra los tres escenarios del Requirement añadido en `specs/engine-package/spec.md` que cada uno tiene su verificación por mutación, y anotar cuál cubre a cuál.
-- [ ] 6.3 Confirmar que los comandos `lint` y `format:check` quedan listos para que el workflow del issue #5 los invoque tal cual, sin adaptación.
-- [ ] 6.4 Cerrar registrando las desviaciones del plan y `openspec validate add-lint-tooling --strict` en verde.
+- [x] 6.1 En un clon limpio: `npm install`, `npm run lint`, `npm run format:check`, `npm run typecheck` y `npm test` pasan; pegar la salida real.
+- [x] 6.2 Confirmar contra los tres escenarios del Requirement añadido en `specs/engine-package/spec.md` que cada uno tiene su verificación por mutación, y anotar cuál cubre a cuál.
+- [x] 6.3 Confirmar que los comandos `lint` y `format:check` quedan listos para que el workflow del issue #5 los invoque tal cual, sin adaptación.
+- [x] 6.4 Cerrar registrando las desviaciones del plan y `openspec validate add-lint-tooling --strict` en verde.
+
+### Evidencia
+
+**6.1 — Clon limpio** (`git clone -b chore/lint-tooling`), sin pasos intermedios:
+
+```
+npm run lint          PASA
+npm run format:check  PASA
+npm run typecheck     PASA
+npm run test          PASA
+```
+
+**6.2 — Cobertura del Requirement "El motor no consume aleatoriedad ambiental":**
+
+| Scenario                                  | Verificación por mutación                                                                        | Resultado                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Se rechaza antes de ejecutarse            | `Math.random()` en `packages/engine/src/state.ts`                                                | `npm run lint` falla con `no-restricted-properties` y el mensaje que cita el ADR 0004 |
+| La aleatoriedad entra por parámetro       | Contrato de diseño; hoy el motor no consume ninguna fuente. El issue #8 lo construye en positivo | —                                                                                     |
+| Aplica al motor, no al repositorio entero | El **mismo** `Math.random()` en `apps/web/src/main.ts`                                           | `npm run lint` **pasa**: el acotamiento por `overrides` funciona                      |
+
+Mutaciones adicionales, fuera del Requirement pero dentro del objetivo del issue:
+
+- Import de `@loveletter/engine/server` en `apps/web` → falla con `no-restricted-imports`. Segunda línea de defensa de la frontera que el `exports` ya impone.
+- `console.log` en `packages/engine/src/` → falla. El mismo `console.log` bajo `tests/` → pasa.
+
+Todas revertidas; `git status` sin residuos.
+
+**6.3 — Listos para el issue #5:** `npm run lint` y `npm run format:check` corren desde la raíz, devuelven código de salida distinto de cero al fallar, y no requieren argumentos ni configuración adicional. El workflow puede invocarlos tal cual.
+
+**6.4 — Desviaciones registradas:** tareas 1.3 (la segunda mitad de la verificación quedó pendiente hasta el formateo completo), 2.4 (los fixtures no hacen ruido en el lint; sí se excluyeron del formateo) y 4.1 (`.claude/` y `openspec/changes/archive/` excluidos de Prettier por ser contenido generado e histórico respectivamente).
