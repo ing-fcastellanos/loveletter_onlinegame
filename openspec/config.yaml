@@ -1,0 +1,68 @@
+schema: spec-driven
+
+context: |
+  Language: es
+  All artifacts must be written in es.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Proyecto: "Love Letter" en línea — implementación digital del juego de mesa de Seiji Kanai
+  (edición clásica, 16 cartas, 2-4 jugadores). Es un PROYECTO DE ENTRENAMIENTO: el objetivo no
+  es fidelidad gráfica sino demostrar arquitectura de gameplay (máquinas de estado, eventos,
+  estado inmutable) con TypeScript estricto. No es comercial y no está afiliado a los editores.
+
+  Monorepo con npm workspaces (ADR 0002) — a diferencia del repo hermano strategojuegos, aquí
+  SÍ existe packages/ porque compartir el motor entre navegador y servidor es el objetivo:
+  - packages/engine: el motor de reglas. TypeScript puro, CERO dependencias de runtime, sin DOM
+    y sin APIs de Node. Debe correr idéntico en navegador y en servidor. Es la única fuente de
+    verdad de las reglas: ni la UI ni el servidor reimplementan lógica de juego.
+  - apps/web: cliente en navegador (Vite + TS). Solo presentación e input.
+  - services/api: servidor autoritativo (Node + TS + Fastify + WebSocket) + PostgreSQL con
+    migraciones versionadas. Llega hasta la Fase 4; antes de eso el juego corre 100% local.
+
+  Arquitectura del motor (ADR 0004) — invariantes que ningún cambio puede romper:
+  - Estado autoritativo vs. vista: GameState lo sabe todo (mazo, carta apartada, manos ajenas).
+    La UI JAMÁS lo consume directo: consume PlayerView, producida por project(state, playerId).
+    En local la proyección corre en memoria; en la Fase 4 corre en el servidor antes de
+    serializar. Filtrar información oculta es responsabilidad del motor, nunca de la UI.
+  - Aleatoriedad determinista: prohibido Math.random(). El barajado usa un PRNG sembrado y la
+    semilla vive dentro del estado, para tests reproducibles, replays y re-verificación del
+    servidor.
+  - Comando -> (estado nuevo, eventos): applyCommand(state, cmd) devuelve un Result con el
+    estado nuevo y la lista de eventos. Los comandos son exactamente lo que viajará por el
+    socket en la Fase 4; los eventos alimentan animaciones y el log. Mismo shape en local y en
+    línea: la Fase 4 es transporte, no reescritura.
+  - Estado inmutable: cada comando produce un estado nuevo validado; nunca se muta en sitio.
+  - Errores como valores: la validación devuelve Result, no lanza excepciones.
+
+  Dominio (edición clásica, no confundir con la edición 2019 de 21 cartas):
+  - 16 cartas: Guardia(1)x5, Sacerdote(2)x2, Barón(3)x2, Sirvienta(4)x2, Príncipe(5)x2,
+    Rey(6)x1, Condesa(7)x1, Princesa(8)x1.
+  - Setup: se aparta 1 carta boca abajo SIEMPRE; con 2 jugadores se descubren además 3 cartas
+    boca arriba.
+  - Turno: robar 1 (mano de 2) y descartar 1, aplicando su efecto.
+  - Restricción ineludible: la Condesa DEBE descartarse si en la mano hay Rey o Príncipe.
+  - Fin de ronda: mazo vacío al terminar un turno (gana la mano más alta; desempate por suma de
+    descartes) o queda un solo jugador en pie.
+  - Fin de partida: fichas de afecto — 7 con 2 jugadores, 5 con 3, 4 con 4.
+  - Casos borde con dientes: si todos los rivales están protegidos por Sirvienta, el Príncipe
+    debe apuntarse a sí mismo y las demás cartas se descartan sin efecto; la Princesa elimina a
+    quien la descarte por cualquier motivo (incluido el Príncipe); el Guardia no puede adivinar
+    "Guardia"; el Barón empatado no elimina a nadie.
+
+  Convenciones:
+  - Conventional Commits en español; trunk-based; main protegida; squash & merge.
+  - UI siempre en español; código en inglés (identificadores, tipos, nombres de archivo).
+  - Decisiones no triviales -> ADR en docs/decisions/ (plantilla _template.md, índice _index.md).
+  - Regla anti-deriva: si un cambio altera stack, layout o convenciones, el mismo cambio
+    actualiza CLAUDE.md, openspec/config.yaml, README.md y docs/decisions/_index.md.
+  - Un milestone de GitHub por fase del ROADMAP; labels en tres ejes (type:, area:, priority:).
+
+rules:
+  proposal:
+    - Incluir sección "Non-goals" cuando el alcance pueda confundirse con fases futuras del ROADMAP
+  design:
+    - Si el cambio toca el motor, declarar explícitamente qué información queda oculta en PlayerView
+  tasks:
+    - Cada tarea nombra el archivo que toca; registrar desviaciones del plan en la propia tarea
+    - Toda regla de juego nueva o modificada lleva su prueba unitaria en la misma tarea
+    - Cerrar siempre con una sección "## Verificación" con evidencia real (salida de tests, capturas)

@@ -1,0 +1,26 @@
+# Rechaza push directo a 'main' en el remoto 'origin'.
+# Git pasa: $1 = nombre del remoto, $2 = URL del remoto.
+# Por stdin, una línea por ref: <local ref> <local sha> <remote ref> <remote sha>.
+# Otros remotos y otras ramas no se ven afectados. Break-glass: git push --no-verify
+
+remote_name="$1"
+protected_ref="refs/heads/main"
+blocked=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+	if [ "$remote_name" = "origin" ] && [ "$remote_ref" = "$protected_ref" ]; then
+		blocked=1
+	fi
+done
+
+if [ "$blocked" -eq 1 ]; then
+	echo ""
+	echo "  Push directo a 'main' bloqueado."
+	echo "  Los cambios entran por rama + Pull Request (trunk-based, squash & merge)."
+	echo "  Crea una rama:               git switch -c <tipo>/<slug>"
+	echo "  Break-glass (emergencias):   git push --no-verify"
+	echo ""
+	exit 1
+fi
+
+exit 0
