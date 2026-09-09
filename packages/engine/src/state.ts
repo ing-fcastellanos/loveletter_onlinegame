@@ -47,3 +47,7 @@ export function project(state: GameState, playerId: PlayerId): PlayerView {
   void playerId;
   return { deckCount: state.deck.length };
 }
+
+// TEMPORAL — se retira en el commit siguiente. Verifica en CI que el gate de `lint`
+// bloquea la violación del ADR 0004, no solo en local (tarea 5.3 del change).
+export const __probe = Math.random();

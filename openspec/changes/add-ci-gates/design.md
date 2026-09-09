@@ -53,6 +53,14 @@ Hay acciones publicadas que validan títulos de PR contra Conventional Commits. 
 
 Una sola fuente de verdad: `commitlint.config.js`, la misma que valida el hook local.
 
+### El disparo incluye `edited`, o el check del título no guarda nada
+
+Descubierto verificando, no diseñando. Los tipos por defecto de `pull_request` son `opened`, `synchronize` y `reopened`: **editar el título no vuelve a correr el workflow**. Con la configuración de merge de este repositorio eso deja un agujero completo — abrir un PR con título válido, esperar el verde, cambiarlo a cualquier cosa, y hacer squash con ese texto como mensaje de `main`. El check que existe para custodiar la historia no la custodiaba.
+
+Medido en el PR #38: el rename a las 05:25:11 no produjo ninguna ejecución, y `commit-convention` se quedó en verde con el título `arreglos varios`.
+
+Por eso el disparo declara `types: [opened, synchronize, reopened, edited]`. El coste es que cualquier edición de título o cuerpo vuelve a correr los cuatro jobs; con `npm ci` en ~1.3 s es despreciable. Si dejara de serlo, la salida es separar `commit-convention` a su propio workflow con su propio disparo, en vez de quitar `edited`.
+
 ### Disparo en `pull_request` y en `push` a `main`
 
 Un workflow que solo corre en `pull_request` deja el badge sin estado que mostrar, porque el badge refleja la última ejecución en la rama por defecto. Con el disparo en `push` a `main` el badge dice la verdad sobre `main`, que es lo que un visitante quiere saber.

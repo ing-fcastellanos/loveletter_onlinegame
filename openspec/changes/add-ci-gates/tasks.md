@@ -23,7 +23,7 @@
 ## 5. Verificación en un PR real
 
 - [ ] 5.1 Abrir el PR de este change y confirmar que aparecen los **cuatro** checks con los nombres esperados y que los cuatro pasan; pegar la lista real.
-- [ ] 5.2 Cambiar temporalmente el título del PR por uno que no cumpla la convención (por ejemplo `arreglos varios`), confirmar que `commit-convention` se pone **rojo**, y restaurar el título; pegar el mensaje de error de commitlint.
+- [x] 5.2 Cambiar temporalmente el título del PR por uno que no cumpla la convención (por ejemplo `arreglos varios`), confirmar que `commit-convention` se pone **rojo**, y restaurar el título; pegar el mensaje de error de commitlint. **Esta tarea encontró un defecto de diseño.** Al renombrar, el check siguió en verde: los tipos por defecto de `pull_request` no incluyen `edited`, así que editar el título no vuelve a correr el workflow. Con squash-only y `squash_merge_commit_title = PR_TITLE`, cualquiera podía pasar el check con un título válido y luego cambiarlo a lo que fuera. Corregido con `types: [opened, synchronize, reopened, edited]` y registrado en `design.md`.
 - [ ] 5.3 Introducir temporalmente una falla —una prueba rota o un `Math.random()` en el motor—, confirmar que el check correspondiente se pone rojo y que los demás siguen verdes, y revertir. Es la demostración de que cuatro jobs separados dicen _qué_ falló, no solo _que_ falló.
 - [ ] 5.4 Confirmar tras el merge que el workflow corre en `push` a `main`, que omite `commit-convention`, y que el badge del README pasa a verde.
 
