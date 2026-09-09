@@ -8,6 +8,15 @@ name: PR gates
 
 on:
   pull_request:
+    # `edited` es imprescindible, no un extra: los tipos por defecto son opened,
+    # synchronize y reopened, así que sin él un PR podía pasar el check con un título
+    # válido, cambiarlo después a cualquier cosa —el rerun nunca se dispara— y entrar a
+    # `main` por squash con ese texto como mensaje de commit. Verificado en el PR #38.
+    #
+    # Coste: cualquier edición de título o cuerpo vuelve a correr los cuatro jobs. Con
+    # `npm ci` en ~1.3 s es despreciable; si dejara de serlo, la salida es separar
+    # `commit-convention` a su propio workflow con su propio disparo.
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 
