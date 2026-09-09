@@ -1,22 +1,22 @@
 ## 1. Herramientas y configuración base
 
-- [ ] 1.1 Añadir `oxlint` y `prettier` como `devDependencies` de la raíz en `package.json`; verificar que `npx oxlint --version` y `npx prettier --version` responden tras `npm install`.
-- [ ] 1.2 Crear `.prettierrc` con una configuración única para los tres workspaces y `.prettierignore` cubriendo `node_modules/`, `dist/`, `coverage/` y `package-lock.json`; verificar con `npx prettier --check` sobre un archivo ya conforme.
-- [ ] 1.3 Añadir los scripts `lint`, `format` y `format:check` a la raíz; verificar que los tres corren y que `format:check` falla ante un archivo mal formateado y pasa tras `format`.
+- [x] 1.1 Añadir `oxlint` y `prettier` como `devDependencies` de la raíz en `package.json`; verificar que `npx oxlint --version` y `npx prettier --version` responden tras `npm install`.
+- [x] 1.2 Crear `.prettierrc` con una configuración única para los tres workspaces y `.prettierignore` cubriendo `node_modules/`, `dist/`, `coverage/` y `package-lock.json`; verificar con `npx prettier --check` sobre un archivo ya conforme.
+- [x] 1.3 Añadir los scripts `lint`, `format` y `format:check` a la raíz; verificar que los tres corren y que `format:check` falla ante un archivo mal formateado y pasa tras `format`. **Nota:** la mitad "pasa tras format" solo pudo comprobarse tras la tarea 4.1, porque hasta entonces había otros archivos sin formatear en el repositorio.
 
 ## 2. Las reglas que hacen ejecutables las invariantes
 
-- [ ] 2.1 Crear `.oxlintrc.json` en la raíz con `no-console` como regla base, y un `override` para `packages/engine/**` con `no-restricted-properties` prohibiendo `Math.random`; el mensaje cita el ADR 0004. Verificar que `npx oxlint` reporta la regla al introducir la llamada.
-- [ ] 2.2 Añadir el `override` para `apps/web/**` con `no-restricted-imports` prohibiendo `@loveletter/engine/server`; el mensaje cita el ADR 0005. Verificar que se reporta al introducir el import.
-- [ ] 2.3 Acotar `no-console` para que no aplique a `**/tests/**`; verificar que un `console.log` en una prueba pasa y en `packages/engine/src/` falla.
-- [ ] 2.4 Comprobar que los fixtures negativos de `packages/engine/tests/fixtures/` no producen ruido en el lint (contienen código inválido a propósito); si lo produjeran, excluirlos **del lint únicamente**, nunca del typecheck, y registrar la desviación en esta tarea.
+- [x] 2.1 Crear `.oxlintrc.json` en la raíz con `no-console` como regla base, y un `override` para `packages/engine/**` con `no-restricted-properties` prohibiendo `Math.random`; el mensaje cita el ADR 0004. Verificar que `npx oxlint` reporta la regla al introducir la llamada.
+- [x] 2.2 Añadir el `override` para `apps/web/**` con `no-restricted-imports` prohibiendo `@loveletter/engine/server`; el mensaje cita el ADR 0005. Verificar que se reporta al introducir el import.
+- [x] 2.3 Acotar `no-console` para que no aplique a `**/tests/**`; verificar que un `console.log` en una prueba pasa y en `packages/engine/src/` falla.
+- [x] 2.4 Comprobar que los fixtures negativos de `packages/engine/tests/fixtures/` no producen ruido en el lint (contienen código inválido a propósito); **Resultado:** no producen ruido en el lint (oxlint no verifica tipos, y el `enum` del fixture no viola ninguna regla activa), así que no hizo falta excluirlos del lint. Sí se excluyeron del **formateo**, para no arriesgar alterar código cuya invalidez es el propósito.
 
 ## 3. Verificación de las reglas por mutación
 
-- [ ] 3.1 Introducir `Math.random()` en `packages/engine/src/` y verificar que `npm run lint` falla con `no-restricted-properties` y el mensaje que cita el ADR 0004; revertir (Requirement "El motor no consume aleatoriedad ambiental", primer escenario).
-- [ ] 3.2 Introducir el mismo `Math.random()` en `apps/web/src/` y verificar que `npm run lint` **pasa**: la restricción es del motor, no del repositorio entero; revertir (mismo Requirement, tercer escenario).
-- [ ] 3.3 Introducir en `apps/web/src/` un import de `@loveletter/engine/server` y verificar que `npm run lint` falla con `no-restricted-imports`; revertir. Es la segunda línea de defensa de la frontera que el `exports` ya impone.
-- [ ] 3.4 Introducir un `console.log` en `packages/engine/src/` y verificar que falla; moverlo a un archivo bajo `tests/` y verificar que pasa; revertir.
+- [x] 3.1 Introducir `Math.random()` en `packages/engine/src/` y verificar que `npm run lint` falla con `no-restricted-properties` y el mensaje que cita el ADR 0004; revertir (Requirement "El motor no consume aleatoriedad ambiental", primer escenario).
+- [x] 3.2 Introducir el mismo `Math.random()` en `apps/web/src/` y verificar que `npm run lint` **pasa**: la restricción es del motor, no del repositorio entero; revertir (mismo Requirement, tercer escenario).
+- [x] 3.3 Introducir en `apps/web/src/` un import de `@loveletter/engine/server` y verificar que `npm run lint` falla con `no-restricted-imports`; revertir. Es la segunda línea de defensa de la frontera que el `exports` ya impone.
+- [x] 3.4 Introducir un `console.log` en `packages/engine/src/` y verificar que falla; moverlo a un archivo bajo `tests/` y verificar que pasa; revertir.
 
 ## 4. Formateo del código existente
 

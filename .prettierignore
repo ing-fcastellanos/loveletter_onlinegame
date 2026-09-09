@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+
+# Generado por el CLI de openspec (`openspec init --tools claude`): las skills llevan
+# `generatedBy` en su frontmatter. Formatearlos hace que cualquier regeneración rompa
+# `format:check`, así que se dejan tal como los emite la herramienta.
+.claude/
+
+# Registro histórico: los changes archivados no se reescriben.
+openspec/changes/archive/
+
+# Los fixtures negativos contienen código inválido a propósito (ver
+# packages/engine/tests/boundary.test.ts): formatearlos no aporta y arriesga alterarlos.
+packages/engine/tests/fixtures/
