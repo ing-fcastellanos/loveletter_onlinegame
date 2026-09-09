@@ -9,6 +9,7 @@
 | [0003](0003-stack-typescript-cliente-y-servidor.md) | Stack: TypeScript estricto en cliente y servidor | Accepted | 2026-09-08 |
 | [0004](0004-estado-autoritativo-proyecciones-y-determinismo.md) | Estado autoritativo, proyecciones por jugador y determinismo | Accepted | 2026-09-08 |
 | [0005](0005-motor-como-codigo-fuente-y-superficie-de-cliente.md) | El motor como paquete de código fuente, con superficie de cliente separada | Accepted | 2026-09-08 |
+| [0006](0006-linter-y-formateador-oxlint-prettier.md) | Linter y formateador: oxlint + Prettier, sin ESLint | Accepted | 2026-09-09 |
 
 ## ADRs previstos (nacerán de fases del ROADMAP)
 

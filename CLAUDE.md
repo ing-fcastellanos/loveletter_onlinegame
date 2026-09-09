@@ -53,12 +53,13 @@ Edición clásica, 16 cartas. **No** confundir con la edición 2019 (21 cartas, 
 | Servidor (`services/api`) | Node 22+ · TypeScript · Fastify · WebSocket |
 | Persistencia | PostgreSQL con migraciones versionadas en archivos |
 | Tests | Vitest |
+| Lint y formato | **oxlint** + **Prettier** — sin ESLint ([ADR 0006](docs/decisions/0006-linter-y-formateador-oxlint-prettier.md)) |
 
 TypeScript estricto significa, mínimo: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`. Sin `any` en `packages/engine`. Sin `console.log` en código de producción.
 
 Además, por el [ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md): `module` y `moduleResolution` en `nodenext`, más `allowImportingTsExtensions`, `verbatimModuleSyntax`, `noEmit` y `erasableSyntaxOnly`.
 
-**No** introduzcas otra base de datos, framework de UI, ORM ni herramienta de monorepo sin ADR.
+**No** introduzcas otra base de datos, framework de UI, ORM ni herramienta de monorepo sin ADR. **No instales ESLint**: el paquete `typescript` 7 ya no publica la API JS del compilador, así que `typescript-eslint` no puede funcionar (ADR 0006).
 
 ## ⚠️ Invariantes del motor — romper una de estas es un bug, no una decisión de estilo
 
