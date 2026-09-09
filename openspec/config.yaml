@@ -15,6 +15,16 @@ context: |
   - packages/engine: el motor de reglas. TypeScript puro, CERO dependencias de runtime, sin DOM
     y sin APIs de Node. Debe correr idéntico en navegador y en servidor. Es la única fuente de
     verdad de las reglas: ni la UI ni el servidor reimplementan lógica de juego.
+    Se distribuye como CÓDIGO FUENTE, sin build (ADR 0005): exports apunta a los .ts de src/,
+    que Node ejecuta por type-stripping y Vite procesa nativamente. Su exports parte la
+    superficie y el default es el seguro: "." expone PlayerView, Command y legalMoves;
+    "./server" expone GameState, applyCommand y project. apps/web importa @ll/engine;
+    services/api y las pruebas del motor importan @ll/engine/server. Alcanzar GameState desde
+    la superficie segura es error de compilación (TS2305), no una infracción de estilo.
+    Configuración obligatoria: module y moduleResolution en nodenext, allowImportingTsExtensions,
+    verbatimModuleSyntax, noEmit y erasableSyntaxOnly. PROHIBIDOS enum, namespace y propiedades
+    de parámetro (Node los rechaza); en su lugar, objetos `as const` con uniones literales.
+    Los imports relativos llevan extensión .ts, no .js.
   - apps/web: cliente en navegador (Vite + TS). Solo presentación e input.
   - services/api: servidor autoritativo (Node + TS + Fastify + WebSocket) + PostgreSQL con
     migraciones versionadas. Llega hasta la Fase 4; antes de eso el juego corre 100% local.

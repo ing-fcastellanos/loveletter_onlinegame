@@ -10,7 +10,7 @@ El objetivo no es la fidelidad gráfica: es la **arquitectura**. El proyecto exi
 
 Tres invariantes gobiernan el diseño y están documentadas en el [ADR 0004](docs/decisions/0004-estado-autoritativo-proyecciones-y-determinismo.md):
 
-1. **La UI nunca ve el estado completo.** El motor produce una `PlayerView` por jugador; lo oculto no aparece censurado sino ausente del tipo (el mazo es un contador, no un arreglo de cartas tapadas).
+1. **La UI nunca ve el estado completo.** El motor produce una `PlayerView` por jugador; lo oculto no aparece censurado sino ausente del tipo (el mazo es un contador, no un arreglo de cartas tapadas). La frontera no es una convención: el `exports` del paquete la impone, y alcanzar `GameState` desde la superficie de cliente es un error de compilación.
 2. **Nada de `Math.random()`.** El barajado usa un PRNG sembrado y la semilla vive en el estado: misma semilla y mismos comandos, misma partida carta por carta. De ahí salen los tests deterministas y los replays.
 3. **Comando → (estado nuevo, eventos).** Es el mismo contrato en local y en línea, así que el multijugador es un problema de transporte, no una reescritura del motor.
 
