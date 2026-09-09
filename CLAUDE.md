@@ -140,7 +140,15 @@ Instala husky + commitlint y activa los hooks (`commit-msg` valida el mensaje; `
 npm test                          # Vitest en todos los workspaces
 npm run typecheck                 # tsc --noEmit en todos los workspaces
 npm test --workspace packages/engine
+
+npm run lint                      # oxlint — invariantes del motor como reglas
+npm run format                    # Prettier — escribe
+npm run format:check              # Prettier — solo verifica (el que usará el CI)
 ```
+
+El lint acota sus reglas por directorio desde un solo `.oxlintrc.json` en la raíz: `Math.random()`
+prohibido en el motor, `@loveletter/engine/server` prohibido en `apps/web`, `console.log` fuera de
+`tests/`. Cada mensaje cita el ADR que origina la regla.
 
 ## Flujo obligatorio para nuevos requerimientos
 
@@ -178,7 +186,7 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 ## Cosas que **no** existen todavía (no las inventes)
 
 - **No hay reglas de juego.** Los tres workspaces ya existen y se enlazan, pero `packages/engine` solo tiene marcadores mínimos (`GameState`, `PlayerView`, `project` y `CARD`) que existen para sostener la frontera del `exports`. El modelo real llega con el issue #7 y las reglas con la Fase 2.
-- No hay CI todavía: el workflow de PR gates entra con la Fase 0.
+- No hay CI todavía: el workflow de PR gates es el issue #5. Los comandos que ejecutará (`lint`, `format:check`, `typecheck`, `test`) ya existen.
 - No hay protección de `main` server-side. Interinamente: el hook `pre-push` local rechaza push directo a `main`.
 - No hay UI: `apps/web` es un punto de entrada que prueba el enlace con el motor. La interfaz real es la Fase 3.
 - No hay servidor, ni base de datos, ni persistencia: `services/api` es un esqueleto. Fastify, WebSocket y PostgreSQL son la Fase 4.

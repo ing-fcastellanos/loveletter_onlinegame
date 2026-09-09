@@ -25,8 +25,8 @@
 
 ## 5. Documentación
 
-- [ ] 5.1 Añadir `lint`, `format` y `format:check` a la sección "Día a día" de `CLAUDE.md`, y retirar de "Cosas que no existen todavía" lo que este change crea; verificar que no queda ninguna afirmación falsa en ese archivo (regla anti-deriva).
-- [ ] 5.2 Confirmar que el ADR 0006, `openspec/config.yaml` y `docs/decisions/_index.md` ya reflejan la decisión (se actualizaron al escribir el ADR); verificar que no falta ninguno.
+- [x] 5.1 Añadir `lint`, `format` y `format:check` a la sección "Día a día" de `CLAUDE.md`, y retirar de "Cosas que no existen todavía" lo que este change crea; verificar que no queda ninguna afirmación falsa en ese archivo (regla anti-deriva).
+- [x] 5.2 Confirmar que el ADR 0006, `openspec/config.yaml` y `docs/decisions/_index.md` ya reflejan la decisión (se actualizaron al escribir el ADR); verificar que no falta ninguno.
 
 ## 6. Verificación
 
