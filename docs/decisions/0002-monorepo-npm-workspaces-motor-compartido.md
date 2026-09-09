@@ -8,7 +8,7 @@
 
 El motor de reglas de Love Letter tiene que ejecutarse en **dos lugares distintos**: en el navegador durante las Fases 1–3 (juego local, sin servidor) y en el servidor autoritativo desde la Fase 4 (multijugador, donde el cliente no es de fiar). Si las reglas viven duplicadas en ambos lados, divergen — y una divergencia entre la validación del cliente y la del servidor es, en un juego con información oculta, un agujero de trampa.
 
-El repo hermano `strategojuegos` tiene una regla explícita: *"No crees `packages/`, `libs/` ni `shared/` sin ADR"*. Ese repo la justifica bien: sus deployables (`apps/web`, `apps/admin`, `services/api`) no comparten código — el front es TypeScript y el backend es Python, y el acoplamiento de un paquete común solo habría añadido tooling sin beneficio.
+El repo hermano `strategojuegos` tiene una regla explícita: _"No crees `packages/`, `libs/` ni `shared/` sin ADR"_. Ese repo la justifica bien: sus deployables (`apps/web`, `apps/admin`, `services/api`) no comparten código — el front es TypeScript y el backend es Python, y el acoplamiento de un paquete común solo habría añadido tooling sin beneficio.
 
 Aquí la situación es la inversa: **compartir el motor es el objetivo del proyecto**, no un accidente. Este ADR existe precisamente para satisfacer esa cláusula "sin ADR".
 
@@ -43,7 +43,7 @@ Reglas duras que acompañan a la estructura:
 ## Razones
 
 - npm workspaces resuelve el enlace local (`packages/engine` resoluble por nombre desde ambos consumidores) sin instalar nada: npm 11 ya está en la máquina y no hay una herramienta más que aprender, configurar o mantener.
-- La opción 2 (motor dentro de `apps/web`) posterga el trabajo pero no lo evita: el PDD marca explícitamente la Fase 4 como *transición* a cliente-servidor, no como reescritura. Extraer un motor ya enredado con código de UI es justo el refactor doloroso que el diseño busca evitar.
+- La opción 2 (motor dentro de `apps/web`) posterga el trabajo pero no lo evita: el PDD marca explícitamente la Fase 4 como _transición_ a cliente-servidor, no como reescritura. Extraer un motor ya enredado con código de UI es justo el refactor doloroso que el diseño busca evitar.
 - La opción 3 tiene el mismo problema, amplificado a todo el repo.
 - Nx/Turborepo aportan caché de builds y grafos de tareas: valor real en monorepos de decenas de paquetes y minutos de build. Aquí hay tres paquetes y un build de segundos — sería ceremonia pura, y contradice el criterio del linaje de repos de no meter tooling sin beneficio demostrable.
 

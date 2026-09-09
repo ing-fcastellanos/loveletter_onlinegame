@@ -1,8 +1,8 @@
 ---
 name: Bug
 about: Reportar algo que no funciona
-title: ""
-labels: "type: bug"
+title: ''
+labels: 'type: bug'
 ---
 
 ## Qué pasa

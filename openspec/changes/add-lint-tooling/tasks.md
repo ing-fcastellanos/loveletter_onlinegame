@@ -20,8 +20,8 @@
 
 ## 4. Formateo del código existente
 
-- [ ] 4.1 Ejecutar `npm run format` sobre todo el repositorio y revisar el diff en busca de cambios sospechosos (nada más allá de espaciado, comillas y saltos de línea); **este paso va en un commit propio**, separado del resto del change.
-- [ ] 4.2 Verificar que tras el formateo `npm run typecheck` y `npm test` siguen pasando: el formateo no puede cambiar comportamiento.
+- [x] 4.1 Ejecutar `npm run format` sobre todo el repositorio y revisar el diff en busca de cambios sospechosos (nada más allá de espaciado, comillas y saltos de línea); **este paso va en un commit propio**, separado del resto del change. **Desviación:** el design no anticipó que Prettier quisiera formatear los archivos **generados** por el CLI de openspec (`.claude/skills/*/SKILL.md` llevan `generatedBy` en su frontmatter) — formatearlos haría que cualquier regeneración rompiera `format:check`. Se añadieron a `.prettierignore` junto con `openspec/changes/archive/` (registro histórico que no se reescribe). El alcance bajó de 30 archivos a 17, todos propios. En código solo cambió un salto de línea; en Markdown, solo relleno de tablas; en las plantillas de issue, las comillas del frontmatter YAML — verificado con un parser que los valores quedan idénticos.
+- [x] 4.2 Verificar que tras el formateo `npm run typecheck` y `npm test` siguen pasando: el formateo no puede cambiar comportamiento.
 
 ## 5. Documentación
 

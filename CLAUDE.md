@@ -20,16 +20,16 @@ Las convenciones de proceso se heredan del repo hermano **strategojuegos** (`/ho
 
 Edición clásica, 16 cartas. **No** confundir con la edición 2019 (21 cartas, hasta 6 jugadores, personajes extra) — está fuera de alcance.
 
-| # | Carta | Copias | Efecto |
-|---|---|---|---|
-| 1 | Guardia | 5 | Nombra una carta que no sea Guardia y apunta a un jugador; si aciertas, queda eliminado |
-| 2 | Sacerdote | 2 | Miras la mano de otro jugador |
-| 3 | Barón | 2 | Comparan manos en privado; el de menor valor queda eliminado (empate: nadie) |
-| 4 | Sirvienta | 2 | Inmune a efectos hasta tu siguiente turno |
-| 5 | Príncipe | 2 | Un jugador (puedes ser tú) descarta su mano y roba otra |
-| 6 | Rey | 1 | Intercambias tu mano con la de otro jugador |
-| 7 | Condesa | 1 | **Debes** descartarla si tienes Rey o Príncipe en la mano |
-| 8 | Princesa | 1 | Si la descartas por cualquier motivo, quedas eliminado |
+| #   | Carta     | Copias | Efecto                                                                                  |
+| --- | --------- | ------ | --------------------------------------------------------------------------------------- |
+| 1   | Guardia   | 5      | Nombra una carta que no sea Guardia y apunta a un jugador; si aciertas, queda eliminado |
+| 2   | Sacerdote | 2      | Miras la mano de otro jugador                                                           |
+| 3   | Barón     | 2      | Comparan manos en privado; el de menor valor queda eliminado (empate: nadie)            |
+| 4   | Sirvienta | 2      | Inmune a efectos hasta tu siguiente turno                                               |
+| 5   | Príncipe  | 2      | Un jugador (puedes ser tú) descarta su mano y roba otra                                 |
+| 6   | Rey       | 1      | Intercambias tu mano con la de otro jugador                                             |
+| 7   | Condesa   | 1      | **Debes** descartarla si tienes Rey o Príncipe en la mano                               |
+| 8   | Princesa  | 1      | Si la descartas por cualquier motivo, quedas eliminado                                  |
 
 - **Setup**: se aparta 1 carta boca abajo **siempre**; con 2 jugadores se descubren además 3 cartas boca arriba.
 - **Turno**: robas 1 (tienes 2 en mano) y descartas 1 aplicando su efecto.
@@ -46,14 +46,14 @@ Edición clásica, 16 cartas. **No** confundir con la edición 2019 (21 cartas, 
 
 ## Stack — verdades del proyecto
 
-| Capa | Tecnología |
-|---|---|
+| Capa                      | Tecnología                                                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Motor (`packages/engine`) | TypeScript 7 estricto · **cero dependencias de runtime** · sin DOM · sin APIs de Node · **sin build** ([ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md)) |
-| Cliente (`apps/web`) | Vite + TypeScript. Técnica de render (DOM vs Canvas): ADR pendiente de la Fase 3 |
-| Servidor (`services/api`) | Node 22+ · TypeScript · Fastify · WebSocket |
-| Persistencia | PostgreSQL con migraciones versionadas en archivos |
-| Tests | Vitest |
-| Lint y formato | **oxlint** + **Prettier** — sin ESLint ([ADR 0006](docs/decisions/0006-linter-y-formateador-oxlint-prettier.md)) |
+| Cliente (`apps/web`)      | Vite + TypeScript. Técnica de render (DOM vs Canvas): ADR pendiente de la Fase 3                                                                                                            |
+| Servidor (`services/api`) | Node 22+ · TypeScript · Fastify · WebSocket                                                                                                                                                 |
+| Persistencia              | PostgreSQL con migraciones versionadas en archivos                                                                                                                                          |
+| Tests                     | Vitest                                                                                                                                                                                      |
+| Lint y formato            | **oxlint** + **Prettier** — sin ESLint ([ADR 0006](docs/decisions/0006-linter-y-formateador-oxlint-prettier.md))                                                                            |
 
 TypeScript estricto significa, mínimo: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`. Sin `any` en `packages/engine`. Sin `console.log` en código de producción.
 
@@ -96,7 +96,7 @@ Funciona porque `legalMoves` se calcula íntegramente desde una `PlayerView`: ni
 
 ```ts
 const CARD = { Guard: 1, Priest: 2, /* … */ Princess: 8 } as const;
-type CardName  = keyof typeof CARD;
+type CardName = keyof typeof CARD;
 type CardValue = (typeof CARD)[CardName];
 ```
 

@@ -1,8 +1,8 @@
 ---
 name: Funcionalidad
 about: Proponer una funcionalidad nueva o un cambio de comportamiento
-title: ""
-labels: "type: feature"
+title: ''
+labels: 'type: feature'
 ---
 
 ## Contexto

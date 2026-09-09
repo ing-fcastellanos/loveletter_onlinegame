@@ -22,14 +22,16 @@ El issue #4 daba por sentado ESLint. La exploración midió que no es viable con
 - **CI y PR gates** (issue #5): este change deja los comandos `lint` y `format:check` listos para que el workflow los invoque, pero no crea el workflow. Son changes separados a propósito: el lint aporta valor en la máquina de quien desarrolla aunque el CI todavía no exista.
 - **El PRNG sembrado y el barajado determinista** (issue #8): aquí solo se prohíbe la fuente ambiental de aleatoriedad. Construir la alternativa inyectada es la Fase 1.
 - **Reglas con información de tipos**: oxlint no las ofrece y ninguna invariante actual las necesita. El trade-off está registrado en el ADR 0006.
-- **Regla que prohíba el *tipo* `GameState` en la UI**: el `exports` partido ya lo hace imposible en compilación y una prueba lo verifica. La regla de este change prohíbe el **especificador** `@loveletter/engine/server`, que es la puerta por la que se podría entrar, y es explícitamente segunda línea de defensa.
+- **Regla que prohíba el _tipo_ `GameState` en la UI**: el `exports` partido ya lo hace imposible en compilación y una prueba lo verifica. La regla de este change prohíbe el **especificador** `@loveletter/engine/server`, que es la puerta por la que se podría entrar, y es explícitamente segunda línea de defensa.
 
 ## Capabilities
 
 ### New Capabilities
+
 (ninguna)
 
 ### Modified Capabilities
+
 - `engine-package`: se añade el requisito de que el motor no consume aleatoriedad ambiental. Es un contrato de comportamiento del paquete que hasta ahora solo existía en el ADR 0004.
 
 ## Impact

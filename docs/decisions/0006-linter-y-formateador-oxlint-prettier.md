@@ -31,14 +31,14 @@ Las invariantes que este proyecto necesita vigilar son tres, y ninguna requiere 
 
 Se midieron los tres candidatos contra esas invariantes reales:
 
-| | ESLint + typescript-eslint | Biome | oxlint |
-|---|---|---|---|
-| Funciona con TypeScript 7 | **No** | Sí | Sí |
-| `Math.random()` en el motor | Sí | **No** | **Sí** |
-| Import de `/server` en la UI | Sí | Sí | Sí |
-| `console.log` | Sí | Sí | Sí |
-| Acotar reglas por directorio | Sí | Sí | **Sí** |
-| Formateo | Prettier aparte | Incluido | No tiene |
+|                              | ESLint + typescript-eslint | Biome    | oxlint   |
+| ---------------------------- | -------------------------- | -------- | -------- |
+| Funciona con TypeScript 7    | **No**                     | Sí       | Sí       |
+| `Math.random()` en el motor  | Sí                         | **No**   | **Sí**   |
+| Import de `/server` en la UI | Sí                         | Sí       | Sí       |
+| `console.log`                | Sí                         | Sí       | Sí       |
+| Acotar reglas por directorio | Sí                         | Sí       | **Sí**   |
+| Formateo                     | Prettier aparte            | Incluido | No tiene |
 
 Biome no expone una regla para propiedades de un global (no existe `noRestrictedProperties`), así que `Math.random()` se le escapa. Prettier, en cambio, resultó inmune al problema: trae sus parsers vendorizados y formatea TypeScript sin tocar el paquete `typescript`.
 
