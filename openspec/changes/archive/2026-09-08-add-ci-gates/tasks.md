@@ -25,7 +25,7 @@
 - [x] 5.1 Abrir el PR de este change y confirmar que aparecen los **cuatro** checks con los nombres esperados y que los cuatro pasan; pegar la lista real.
 - [x] 5.2 Cambiar temporalmente el título del PR por uno que no cumpla la convención (por ejemplo `arreglos varios`), confirmar que `commit-convention` se pone **rojo**, y restaurar el título; pegar el mensaje de error de commitlint. **Esta tarea encontró un defecto de diseño.** Al renombrar, el check siguió en verde: los tipos por defecto de `pull_request` no incluyen `edited`, así que editar el título no vuelve a correr el workflow. Con squash-only y `squash_merge_commit_title = PR_TITLE`, cualquiera podía pasar el check con un título válido y luego cambiarlo a lo que fuera. Corregido con `types: [opened, synchronize, reopened, edited]` y registrado en `design.md`.
 - [x] 5.3 Introducir temporalmente una falla —una prueba rota o un `Math.random()` en el motor—, confirmar que el check correspondiente se pone rojo y que los demás siguen verdes, y revertir. Es la demostración de que cuatro jobs separados dicen _qué_ falló, no solo _que_ falló.
-- [ ] 5.4 Confirmar tras el merge que el workflow corre en `push` a `main`, que omite `commit-convention`, y que el badge del README pasa a verde.
+- [x] 5.4 Confirmar tras el merge que el workflow corre en `push` a `main`, que omite `commit-convention`, y que el badge del README pasa a verde.
 
 ## 6. Cierre
 
@@ -61,7 +61,20 @@ commit-convention: pass · test: pass · typecheck: pass
 
 Cierra el círculo del change anterior: el ADR 0004 lo prohíbe, oxlint lo detecta, y el CI lo rechaza.
 
-**5.4 — Pendiente del merge**: que el workflow corra en `push` a `main`, omita `commit-convention` y el badge se ponga verde. Solo se puede observar una vez integrado.
+**5.4 — Verificado tras el merge** (ejecución `34315260548`, evento `push` sobre `main`):
+
+```
+test:              conclusión=success   pasos_ejecutados=8
+lint:              conclusión=success   pasos_ejecutados=9
+typecheck:         conclusión=success   pasos_ejecutados=8
+commit-convention: conclusión=skipped   pasos_ejecutados=0
+```
+
+El badge del README reporta `passing` y apunta a `pr-gates.yml`, que es el nombre real del archivo.
+
+**Nota de método:** el primer script de verificación dio un falso positivo — comprobaba si el nombre `commit-convention` aparecía entre los jobs, y GitHub lista también los omitidos. Lo correcto es mirar la conclusión (`skipped`) y el número de pasos ejecutados (0). El fallo estaba en la verificación, no en el workflow.
+
+**Nota para el issue #6:** un job omitido por su `if` cuenta como satisfecho en la protección de rama, así que `commit-convention` se puede marcar como obligatorio sin bloquear los push a `main`. En un PR siempre se ejecuta, que es donde debe guardar.
 
 **6.1 — Nombres de check para el issue #6:** `typecheck`, `test`, `lint` y `commit-convention`, documentados en `CLAUDE.md`. `permissions: contents: read` a nivel de workflow: ningún job escribe nada.
 
