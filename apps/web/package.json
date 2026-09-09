@@ -1,0 +1,19 @@
+{
+  "name": "@loveletter/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cliente en navegador de Love Letter. Solo presentaci\u00f3n e input: consume \u00fanicamente la superficie de cliente del motor (ADR 0005).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@loveletter/engine": "*"
+  },
+  "devDependencies": {
+    "vite": "^8.2.2"
+  }
+}

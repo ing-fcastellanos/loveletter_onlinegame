@@ -10,7 +10,7 @@ El objetivo no es la fidelidad gráfica: es la **arquitectura**. El proyecto exi
 
 Tres invariantes gobiernan el diseño y están documentadas en el [ADR 0004](docs/decisions/0004-estado-autoritativo-proyecciones-y-determinismo.md):
 
-1. **La UI nunca ve el estado completo.** El motor produce una `PlayerView` por jugador; lo oculto no aparece censurado sino ausente del tipo (el mazo es un contador, no un arreglo de cartas tapadas).
+1. **La UI nunca ve el estado completo.** El motor produce una `PlayerView` por jugador; lo oculto no aparece censurado sino ausente del tipo (el mazo es un contador, no un arreglo de cartas tapadas). La frontera no es una convención: el `exports` del paquete la impone, y alcanzar `GameState` desde la superficie de cliente es un error de compilación.
 2. **Nada de `Math.random()`.** El barajado usa un PRNG sembrado y la semilla vive en el estado: misma semilla y mismos comandos, misma partida carta por carta. De ahí salen los tests deterministas y los replays.
 3. **Comando → (estado nuevo, eventos).** Es el mismo contrato en local y en línea, así que el multijugador es un problema de transporte, no una reescritura del motor.
 
@@ -39,7 +39,7 @@ En construcción. El avance se sigue por [milestones](../../milestones), uno por
 | 3 — UI y persistencia | Render reactivo a eventos, controles, autoguardado versionado |
 | 4 — Backend y multijugador | Servidor autoritativo, WebSocket, PostgreSQL con migraciones |
 
-Hoy el repositorio contiene proceso, decisiones y tablero: el código empieza en la Fase 0.
+La Fase 0 ya tiene código: los tres workspaces se enlazan, `npm test` y `npm run typecheck` pasan, y la frontera del `exports` está cubierta por pruebas que ejecutan el compilador sobre fixtures que deben fallar. Todavía no hay ninguna regla del juego — esas empiezan en la Fase 1.
 
 ## Cómo se trabaja aquí
 

@@ -48,13 +48,15 @@ Edición clásica, 16 cartas. **No** confundir con la edición 2019 (21 cartas, 
 
 | Capa | Tecnología |
 |---|---|
-| Motor (`packages/engine`) | TypeScript 5 estricto · **cero dependencias de runtime** · sin DOM · sin APIs de Node |
+| Motor (`packages/engine`) | TypeScript 7 estricto · **cero dependencias de runtime** · sin DOM · sin APIs de Node · **sin build** ([ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md)) |
 | Cliente (`apps/web`) | Vite + TypeScript. Técnica de render (DOM vs Canvas): ADR pendiente de la Fase 3 |
 | Servidor (`services/api`) | Node 22+ · TypeScript · Fastify · WebSocket |
 | Persistencia | PostgreSQL con migraciones versionadas en archivos |
 | Tests | Vitest |
 
 TypeScript estricto significa, mínimo: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`. Sin `any` en `packages/engine`. Sin `console.log` en código de producción.
+
+Además, por el [ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md): `module` y `moduleResolution` en `nodenext`, más `allowImportingTsExtensions`, `verbatimModuleSyntax`, `noEmit` y `erasableSyntaxOnly`.
 
 **No** introduzcas otra base de datos, framework de UI, ORM ni herramienta de monorepo sin ADR.
 
@@ -75,6 +77,29 @@ El barajado usa un PRNG sembrado y la semilla vive dentro del estado. Misma semi
 ### Comando → `Result<{ state, events }>`
 
 `applyCommand(state, cmd)` devuelve un `Result` con el estado nuevo y los eventos. Estado **inmutable**: nunca se muta en sitio. Jugada ilegal = valor de retorno (`RuleViolation`), **no** una excepción. Los eventos llevan **audiencia** (público o lista de jugadores): así el conocimiento privado del Sacerdote se deriva del log filtrado, sin una estructura paralela de "quién sabe qué".
+
+### El `exports` es la frontera, y el default es el seguro
+
+```
+  "."         →  PlayerView, Command, legalMoves     (superficie segura)
+  "./server"  →  GameState, applyCommand, project    (autoridad completa)
+```
+
+`apps/web` importa `@ll/engine`. `services/api` y las pruebas del motor importan `@ll/engine/server`. Alcanzar `GameState` desde la superficie segura es un error de compilación (`TS2305`), no una infracción de estilo. El import corto y cómodo es el que no puede filtrar información oculta; llegar al estado completo obliga a escribir `/server`, y eso se ve en el diff.
+
+Funciona porque `legalMoves` se calcula íntegramente desde una `PlayerView`: ninguna regla de legalidad depende de información oculta ([ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md)).
+
+### Sintaxis borrable: nada de `enum`
+
+`erasableSyntaxOnly` prohíbe `enum`, `namespace` y propiedades de parámetro — Node los rechaza al ejecutar `.ts` directo. Es una desviación deliberada de la letra del PDD, argumentada en el [ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md). En su lugar, objetos constantes con uniones literales:
+
+```ts
+const CARD = { Guard: 1, Priest: 2, /* … */ Princess: 8 } as const;
+type CardName  = keyof typeof CARD;
+type CardValue = (typeof CARD)[CardName];
+```
+
+Los imports relativos dentro del motor llevan extensión **`.ts`** (no `.js`): es lo que exige Node al ejecutar el fuente.
 
 ### Las reglas viven solo en `packages/engine`
 
@@ -138,6 +163,7 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 - Commits: Conventional Commits en español (`feat|fix|docs|style|refactor|perf|test|chore|ci|revert`), header ≤ 100 chars.
 - Branching: trunk-based, `main` protegida, ramas `<tipo>/<slug>` de vida corta, squash & merge.
 - **Código en inglés** (identificadores, tipos, nombres de archivo), **UI y documentación en español**. Los términos del dominio se nombran en inglés en el código (`Guard`, `Handmaid`, `Countess`) y se traducen solo en la capa de presentación.
+- Sin `enum` ni `namespace` (ADR 0005). Imports relativos con extensión `.ts`.
 - Toda regla de juego nueva o modificada lleva su prueba unitaria en el mismo cambio.
 
 ## Antes de cerrar un cambio
@@ -150,10 +176,11 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 
 ## Cosas que **no** existen todavía (no las inventes)
 
-- **No hay motor.** A la fecha el repo solo tiene proceso, ADRs y tablero. `packages/engine`, `apps/web` y `services/api` se crean en la Fase 0; las reglas llegan en las Fases 1 y 2.
+- **No hay reglas de juego.** Los tres workspaces ya existen y se enlazan, pero `packages/engine` solo tiene marcadores mínimos (`GameState`, `PlayerView`, `project` y `CARD`) que existen para sostener la frontera del `exports`. El modelo real llega con el issue #7 y las reglas con la Fase 2.
 - No hay CI todavía: el workflow de PR gates entra con la Fase 0.
 - No hay protección de `main` server-side. Interinamente: el hook `pre-push` local rechaza push directo a `main`.
-- No hay UI, ni servidor, ni base de datos, ni persistencia: son las Fases 3 y 4.
+- No hay UI: `apps/web` es un punto de entrada que prueba el enlace con el motor. La interfaz real es la Fase 3.
+- No hay servidor, ni base de datos, ni persistencia: `services/api` es un esqueleto. Fastify, WebSocket y PostgreSQL son la Fase 4.
 - No hay bots, ranking, chat, cuentas ni arte propio — ver "Fuera de alcance" en [ROADMAP.md](ROADMAP.md).
 
 Cuando algo de esta lista se cree, actualiza esta sección en el mismo PR.

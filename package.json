@@ -2,11 +2,11 @@
   "name": "loveletter-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "Monorepo de Love Letter en línea. La raíz aloja el tooling de convenciones (husky + commitlint) y declara los workspaces (ADR 0002). Los deployables viven en packages/, apps/ y services/.",
+  "description": "Monorepo de Love Letter en l\u00ednea. La ra\u00edz aloja el tooling de convenciones (husky + commitlint) y declara los workspaces (ADR 0002). Los deployables viven en packages/, apps/ y services/.",
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "workspaces": [
     "packages/*",
@@ -14,11 +14,16 @@
     "services/*"
   ],
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.2",
-    "husky": "^9.1.7"
+    "@vitest/coverage-v8": "^5.0.0",
+    "husky": "^9.1.7",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
   }
 }
