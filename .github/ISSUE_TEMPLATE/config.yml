@@ -2,10 +2,10 @@ blank_issues_enabled: false
 contact_links:
   - name: Flujo para nuevos requerimientos (OpenSpec)
     url: https://github.com/ing-fcastellanos/loveletter_onlinegame/blob/main/CLAUDE.md#flujo-obligatorio-para-nuevos-requerimientos
-    about: "Antes de abrir una funcionalidad: /opsx:explore → /opsx:propose → /opsx:apply → /opsx:archive."
+    about: 'Antes de abrir una funcionalidad: /opsx:explore → /opsx:propose → /opsx:apply → /opsx:archive.'
   - name: Decisiones arquitectónicas ya tomadas (ADRs)
     url: https://github.com/ing-fcastellanos/loveletter_onlinegame/tree/main/docs/decisions
     about: Revisa si tu tema ya está decidido antes de proponer un ADR nuevo.
   - name: Invariantes del motor (ADR 0004)
     url: https://github.com/ing-fcastellanos/loveletter_onlinegame/blob/main/docs/decisions/0004-estado-autoritativo-proyecciones-y-determinismo.md
-    about: "Proyección por jugador, determinismo y comando → eventos. Léelo antes de tocar packages/engine."
+    about: 'Proyección por jugador, determinismo y comando → eventos. Léelo antes de tocar packages/engine.'

@@ -10,15 +10,15 @@ El [ADR 0002](0002-monorepo-npm-workspaces-motor-compartido.md) decidió que `pa
 
 La exploración del issue #1 midió el entorno en vez de suponerlo. Node 26.7.0 y TypeScript 7.0.2:
 
-| Verificación | Resultado |
-|---|---|
-| Node ejecuta `.ts` sin flags | Sí — type-stripping activo por defecto |
-| Node resuelve un workspace cuyo `exports` apunta a `./src/index.ts` | Sí, sin build alguno |
-| Node resuelve subpaths de `exports` a código fuente | Sí (`@ll/engine/server` → `./src/server.ts`) |
-| Node acepta `enum` | **No** — `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` |
-| Imports relativos ejecutando `.ts` | Exigen extensión `.ts`; `./deck` y `./deck.js` fallan |
-| `erasableSyntaxOnly` en TS 7 | Sí — el `enum` falla en compilación con `TS1294` |
-| El `exports` restringe el acceso a tipos | Sí — `TS2305: Module has no exported member 'GameState'` |
+| Verificación                                                        | Resultado                                                |
+| ------------------------------------------------------------------- | -------------------------------------------------------- |
+| Node ejecuta `.ts` sin flags                                        | Sí — type-stripping activo por defecto                   |
+| Node resuelve un workspace cuyo `exports` apunta a `./src/index.ts` | Sí, sin build alguno                                     |
+| Node resuelve subpaths de `exports` a código fuente                 | Sí (`@ll/engine/server` → `./src/server.ts`)             |
+| Node acepta `enum`                                                  | **No** — `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`             |
+| Imports relativos ejecutando `.ts`                                  | Exigen extensión `.ts`; `./deck` y `./deck.js` fallan    |
+| `erasableSyntaxOnly` en TS 7                                        | Sí — el `enum` falla en compilación con `TS1294`         |
+| El `exports` restringe el acceso a tipos                            | Sí — `TS2305: Module has no exported member 'GameState'` |
 
 Eso deja dos mundos coherentes y excluyentes: **motor como código fuente** (sin build, imports con extensión `.ts`, sintaxis borrable obligatoria) o **motor compilado** (`tsc` a `dist`, imports con `.js`, `enum` permitido, build antes de cada test y typecheck). Un tercero, híbrido con condiciones de `exports`, ofrece ambos a cambio de la configuración más compleja.
 
@@ -34,7 +34,7 @@ Quedan prohibidos `enum`, `namespace` y las propiedades de parámetro en constru
 
 ```ts
 const CARD = { Guard: 1, Priest: 2, /* … */ Princess: 8 } as const;
-type CardName  = keyof typeof CARD;
+type CardName = keyof typeof CARD;
 type CardValue = (typeof CARD)[CardName];
 ```
 

@@ -2,7 +2,7 @@
 
 Implementación digital del juego de mesa **Love Letter** (edición clásica, 16 cartas, 2–4 jugadores), construida desde cero en TypeScript.
 
-> **Proyecto de entrenamiento.** No es un producto comercial y no está afiliado ni respaldado por Seiji Kanai, Z-Man Games ni Alderac Entertainment Group. *Love Letter* es propiedad de sus respectivos titulares. Este repositorio reimplementa las reglas con fines de aprendizaje y portafolio; el arte y los textos son propios.
+> **Proyecto de entrenamiento.** No es un producto comercial y no está afiliado ni respaldado por Seiji Kanai, Z-Man Games ni Alderac Entertainment Group. _Love Letter_ es propiedad de sus respectivos titulares. Este repositorio reimplementa las reglas con fines de aprendizaje y portafolio; el arte y los textos son propios.
 
 ## De qué va
 
@@ -31,13 +31,13 @@ Monorepo con npm workspaces — el porqué, en el [ADR 0002](docs/decisions/0002
 
 En construcción. El avance se sigue por [milestones](../../milestones), uno por fase del [ROADMAP](ROADMAP.md):
 
-| Fase | Contenido |
-|---|---|
-| 0 — Fundaciones | Monorepo, TypeScript estricto, Vitest, CI, tablero |
-| 1 — Modelado y core engine | Tipos, mazo, barajado determinista, setup, ciclo de turno |
-| 2 — Efectos y reglas | Las 8 cartas, validadores previos, condiciones de victoria |
-| 3 — UI y persistencia | Render reactivo a eventos, controles, autoguardado versionado |
-| 4 — Backend y multijugador | Servidor autoritativo, WebSocket, PostgreSQL con migraciones |
+| Fase                       | Contenido                                                     |
+| -------------------------- | ------------------------------------------------------------- |
+| 0 — Fundaciones            | Monorepo, TypeScript estricto, Vitest, CI, tablero            |
+| 1 — Modelado y core engine | Tipos, mazo, barajado determinista, setup, ciclo de turno     |
+| 2 — Efectos y reglas       | Las 8 cartas, validadores previos, condiciones de victoria    |
+| 3 — UI y persistencia      | Render reactivo a eventos, controles, autoguardado versionado |
+| 4 — Backend y multijugador | Servidor autoritativo, WebSocket, PostgreSQL con migraciones  |
 
 La Fase 0 ya tiene código: los tres workspaces se enlazan, `npm test` y `npm run typecheck` pasan, y la frontera del `exports` está cubierta por pruebas que ejecutan el compilador sobre fixtures que deben fallar. Todavía no hay ninguna regla del juego — esas empiezan en la Fase 1.
 

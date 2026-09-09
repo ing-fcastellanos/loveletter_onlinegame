@@ -20,16 +20,16 @@ Las convenciones de proceso se heredan del repo hermano **strategojuegos** (`/ho
 
 Edición clásica, 16 cartas. **No** confundir con la edición 2019 (21 cartas, hasta 6 jugadores, personajes extra) — está fuera de alcance.
 
-| # | Carta | Copias | Efecto |
-|---|---|---|---|
-| 1 | Guardia | 5 | Nombra una carta que no sea Guardia y apunta a un jugador; si aciertas, queda eliminado |
-| 2 | Sacerdote | 2 | Miras la mano de otro jugador |
-| 3 | Barón | 2 | Comparan manos en privado; el de menor valor queda eliminado (empate: nadie) |
-| 4 | Sirvienta | 2 | Inmune a efectos hasta tu siguiente turno |
-| 5 | Príncipe | 2 | Un jugador (puedes ser tú) descarta su mano y roba otra |
-| 6 | Rey | 1 | Intercambias tu mano con la de otro jugador |
-| 7 | Condesa | 1 | **Debes** descartarla si tienes Rey o Príncipe en la mano |
-| 8 | Princesa | 1 | Si la descartas por cualquier motivo, quedas eliminado |
+| #   | Carta     | Copias | Efecto                                                                                  |
+| --- | --------- | ------ | --------------------------------------------------------------------------------------- |
+| 1   | Guardia   | 5      | Nombra una carta que no sea Guardia y apunta a un jugador; si aciertas, queda eliminado |
+| 2   | Sacerdote | 2      | Miras la mano de otro jugador                                                           |
+| 3   | Barón     | 2      | Comparan manos en privado; el de menor valor queda eliminado (empate: nadie)            |
+| 4   | Sirvienta | 2      | Inmune a efectos hasta tu siguiente turno                                               |
+| 5   | Príncipe  | 2      | Un jugador (puedes ser tú) descarta su mano y roba otra                                 |
+| 6   | Rey       | 1      | Intercambias tu mano con la de otro jugador                                             |
+| 7   | Condesa   | 1      | **Debes** descartarla si tienes Rey o Príncipe en la mano                               |
+| 8   | Princesa  | 1      | Si la descartas por cualquier motivo, quedas eliminado                                  |
 
 - **Setup**: se aparta 1 carta boca abajo **siempre**; con 2 jugadores se descubren además 3 cartas boca arriba.
 - **Turno**: robas 1 (tienes 2 en mano) y descartas 1 aplicando su efecto.
@@ -46,19 +46,20 @@ Edición clásica, 16 cartas. **No** confundir con la edición 2019 (21 cartas, 
 
 ## Stack — verdades del proyecto
 
-| Capa | Tecnología |
-|---|---|
+| Capa                      | Tecnología                                                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Motor (`packages/engine`) | TypeScript 7 estricto · **cero dependencias de runtime** · sin DOM · sin APIs de Node · **sin build** ([ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md)) |
-| Cliente (`apps/web`) | Vite + TypeScript. Técnica de render (DOM vs Canvas): ADR pendiente de la Fase 3 |
-| Servidor (`services/api`) | Node 22+ · TypeScript · Fastify · WebSocket |
-| Persistencia | PostgreSQL con migraciones versionadas en archivos |
-| Tests | Vitest |
+| Cliente (`apps/web`)      | Vite + TypeScript. Técnica de render (DOM vs Canvas): ADR pendiente de la Fase 3                                                                                                            |
+| Servidor (`services/api`) | Node 22+ · TypeScript · Fastify · WebSocket                                                                                                                                                 |
+| Persistencia              | PostgreSQL con migraciones versionadas en archivos                                                                                                                                          |
+| Tests                     | Vitest                                                                                                                                                                                      |
+| Lint y formato            | **oxlint** + **Prettier** — sin ESLint ([ADR 0006](docs/decisions/0006-linter-y-formateador-oxlint-prettier.md))                                                                            |
 
 TypeScript estricto significa, mínimo: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`. Sin `any` en `packages/engine`. Sin `console.log` en código de producción.
 
 Además, por el [ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md): `module` y `moduleResolution` en `nodenext`, más `allowImportingTsExtensions`, `verbatimModuleSyntax`, `noEmit` y `erasableSyntaxOnly`.
 
-**No** introduzcas otra base de datos, framework de UI, ORM ni herramienta de monorepo sin ADR.
+**No** introduzcas otra base de datos, framework de UI, ORM ni herramienta de monorepo sin ADR. **No instales ESLint**: el paquete `typescript` 7 ya no publica la API JS del compilador, así que `typescript-eslint` no puede funcionar (ADR 0006).
 
 ## ⚠️ Invariantes del motor — romper una de estas es un bug, no una decisión de estilo
 
@@ -95,7 +96,7 @@ Funciona porque `legalMoves` se calcula íntegramente desde una `PlayerView`: ni
 
 ```ts
 const CARD = { Guard: 1, Priest: 2, /* … */ Princess: 8 } as const;
-type CardName  = keyof typeof CARD;
+type CardName = keyof typeof CARD;
 type CardValue = (typeof CARD)[CardName];
 ```
 
@@ -139,7 +140,15 @@ Instala husky + commitlint y activa los hooks (`commit-msg` valida el mensaje; `
 npm test                          # Vitest en todos los workspaces
 npm run typecheck                 # tsc --noEmit en todos los workspaces
 npm test --workspace packages/engine
+
+npm run lint                      # oxlint — invariantes del motor como reglas
+npm run format                    # Prettier — escribe
+npm run format:check              # Prettier — solo verifica (el que usará el CI)
 ```
+
+El lint acota sus reglas por directorio desde un solo `.oxlintrc.json` en la raíz: `Math.random()`
+prohibido en el motor, `@loveletter/engine/server` prohibido en `apps/web`, `console.log` fuera de
+`tests/`. Cada mensaje cita el ADR que origina la regla.
 
 ## Flujo obligatorio para nuevos requerimientos
 
@@ -177,7 +186,7 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 ## Cosas que **no** existen todavía (no las inventes)
 
 - **No hay reglas de juego.** Los tres workspaces ya existen y se enlazan, pero `packages/engine` solo tiene marcadores mínimos (`GameState`, `PlayerView`, `project` y `CARD`) que existen para sostener la frontera del `exports`. El modelo real llega con el issue #7 y las reglas con la Fase 2.
-- No hay CI todavía: el workflow de PR gates entra con la Fase 0.
+- No hay CI todavía: el workflow de PR gates es el issue #5. Los comandos que ejecutará (`lint`, `format:check`, `typecheck`, `test`) ya existen.
 - No hay protección de `main` server-side. Interinamente: el hook `pre-push` local rechaza push directo a `main`.
 - No hay UI: `apps/web` es un punto de entrada que prueba el enlace con el motor. La interfaz real es la Fase 3.
 - No hay servidor, ni base de datos, ni persistencia: `services/api` es un esqueleto. Fastify, WebSocket y PostgreSQL son la Fase 4.

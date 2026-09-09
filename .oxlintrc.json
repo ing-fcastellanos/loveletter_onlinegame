@@ -1,0 +1,44 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["node_modules", "dist", "coverage"],
+  "rules": {
+    "no-console": "error"
+  },
+  "overrides": [
+    {
+      "files": ["packages/engine/**"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "Prohibido en el motor (ADR 0004): el barajado usa un PRNG sembrado cuya semilla vive en el estado. La aleatoriedad se inyecta, no se importa del entorno."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/web/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@loveletter/engine/server",
+                "message": "La UI nunca ve el estado autoritativo (ADR 0004). Usa la superficie por defecto: import ... from '@loveletter/engine'. El exports del paquete ya lo impide en compilación (ADR 0005); esta regla es la segunda línea de defensa."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/tests/**"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
+}

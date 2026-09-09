@@ -55,7 +55,7 @@ Así el **conocimiento privado se deriva del log filtrado**, en vez de mantener 
 ## Razones
 
 - Es la única forma de que la Fase 4 sea un cambio de transporte y no una reescritura: si `PlayerView` y `Command` ya son el contrato en local, ponerles un socket en medio no cambia el motor.
-- Modelar lo oculto por *ausencia en el tipo* convierte una clase entera de fugas de información en errores de compilación, en vez de en revisiones de código.
+- Modelar lo oculto por _ausencia en el tipo_ convierte una clase entera de fugas de información en errores de compilación, en vez de en revisiones de código.
 - La audiencia en los eventos resuelve el Sacerdote sin inventar un sistema paralelo de conocimiento, y de paso da el log de partida y la base de las animaciones.
 - El determinismo hace que las pruebas de reglas sean afirmaciones sobre secuencias reales de juego, no sobre estados fabricados a mano.
 

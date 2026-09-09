@@ -11,7 +11,9 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
-const tscEntry = fileURLToPath(new URL('../../../node_modules/typescript/lib/tsc.js', import.meta.url));
+const tscEntry = fileURLToPath(
+  new URL('../../../node_modules/typescript/lib/tsc.js', import.meta.url),
+);
 
 function typecheck(project: string): { code: number; output: string } {
   const result = spawnSync(process.execPath, [tscEntry, '--noEmit', '-p', project], {

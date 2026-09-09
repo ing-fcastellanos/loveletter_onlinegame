@@ -46,11 +46,11 @@ Al cerrar: dos navegadores distintos juegan la misma partida contra un servidor 
 
 ## Decisiones ya registradas
 
-| ADR | Decisión |
-|---|---|
-| [0001](docs/decisions/0001-proceso-openspec-adrs-github.md) | Proceso: OpenSpec + ADRs + GitHub |
-| [0002](docs/decisions/0002-monorepo-npm-workspaces-motor-compartido.md) | Monorepo con npm workspaces y motor compartido |
-| [0003](docs/decisions/0003-stack-typescript-cliente-y-servidor.md) | Stack TypeScript en cliente y servidor |
+| ADR                                                                            | Decisión                                         |
+| ------------------------------------------------------------------------------ | ------------------------------------------------ |
+| [0001](docs/decisions/0001-proceso-openspec-adrs-github.md)                    | Proceso: OpenSpec + ADRs + GitHub                |
+| [0002](docs/decisions/0002-monorepo-npm-workspaces-motor-compartido.md)        | Monorepo con npm workspaces y motor compartido   |
+| [0003](docs/decisions/0003-stack-typescript-cliente-y-servidor.md)             | Stack TypeScript en cliente y servidor           |
 | [0004](docs/decisions/0004-estado-autoritativo-proyecciones-y-determinismo.md) | Estado autoritativo, proyecciones y determinismo |
 
 ## Fuera de alcance (por ahora)

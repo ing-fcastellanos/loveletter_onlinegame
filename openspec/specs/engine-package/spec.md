@@ -1,6 +1,7 @@
 # engine-package Specification
 
 ## Purpose
+
 Define el contrato del paquete que contiene el motor de reglas: cómo lo consumen el navegador y el servidor, qué publica cada superficie de su API, y qué información no puede alcanzarse desde el lado del cliente. Es la frontera que impide que la implementación de un juego de información oculta filtre esa información por descuido.
 
 ## Requirements

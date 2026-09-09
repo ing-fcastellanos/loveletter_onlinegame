@@ -60,7 +60,13 @@ context: |
     "Guardia"; el Barón empatado no elimina a nadie.
 
   Convenciones:
-  - Conventional Commits en español; trunk-based; main protegida; squash & merge.
+  - Lint con oxlint y formateo con Prettier; NO se instala ESLint (ADR 0006): el paquete
+    typescript 7 ya no publica la API JS del compilador y typescript-eslint no puede operar.
+    Las invariantes se expresan como reglas acotadas por directorio: no-restricted-properties
+    (Math.random en el motor), no-restricted-imports (@loveletter/engine/server en apps/web)
+    y no-console.
+  - Conventional Commits en español; trunk-based; main protegida; squash & merge (único método
+    habilitado en el repositorio; el título del PR se vuelve el mensaje de commit en main).
   - UI siempre en español; código en inglés (identificadores, tipos, nombres de archivo).
   - Decisiones no triviales -> ADR en docs/decisions/ (plantilla _template.md, índice _index.md).
   - Regla anti-deriva: si un cambio altera stack, layout o convenciones, el mismo cambio

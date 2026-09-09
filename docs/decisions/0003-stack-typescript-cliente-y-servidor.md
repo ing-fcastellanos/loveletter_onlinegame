@@ -8,20 +8,20 @@
 
 El PDD fija como primer objetivo técnico el **dominio de TypeScript**: tipado estricto, interfaces genéricas y enums para modelar el estado del juego "con cero ambigüedad". También exige, en la Fase 4, un servidor autoritativo que valide los comandos y una base de datos con **estrategia robusta de versionado de esquemas**, capaz de evitar colisiones de versiones entre entornos (staging y producción).
 
-El linaje de repos de este desarrollador usa Python 3.12 + Flask + Firestore en el backend. Firestore es NoSQL sin migraciones — precisamente la propiedad que aquí *no* sirve, porque el PDD pide ejercitar el problema de las migraciones, no evitarlo.
+El linaje de repos de este desarrollador usa Python 3.12 + Flask + Firestore en el backend. Firestore es NoSQL sin migraciones — precisamente la propiedad que aquí _no_ sirve, porque el PDD pide ejercitar el problema de las migraciones, no evitarlo.
 
 Opciones evaluadas para el servidor: (1) Node + TypeScript, (2) Python + Flask reusando los patrones ya conocidos, (3) diferir la decisión a un spike en la Fase 4.
 
 ## Decisión
 
-| Capa | Tecnología |
-|---|---|
-| Motor (`packages/engine`) | TypeScript 5 estricto. Cero dependencias de runtime, sin DOM, sin APIs de Node |
-| Cliente (`apps/web`) | Vite + TypeScript. La técnica de render (DOM vs Canvas) se decide en su propio ADR en la Fase 3 |
-| Servidor (`services/api`) | Node 22+ · TypeScript · Fastify (HTTP) · WebSocket (tiempo real) |
-| Persistencia | **PostgreSQL** con migraciones versionadas en archivos, revisadas en PR |
-| Tests | Vitest, en los tres paquetes |
-| Runtime local | Docker para PostgreSQL; Node nativo para el resto |
+| Capa                      | Tecnología                                                                                      |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| Motor (`packages/engine`) | TypeScript 5 estricto. Cero dependencias de runtime, sin DOM, sin APIs de Node                  |
+| Cliente (`apps/web`)      | Vite + TypeScript. La técnica de render (DOM vs Canvas) se decide en su propio ADR en la Fase 3 |
+| Servidor (`services/api`) | Node 22+ · TypeScript · Fastify (HTTP) · WebSocket (tiempo real)                                |
+| Persistencia              | **PostgreSQL** con migraciones versionadas en archivos, revisadas en PR                         |
+| Tests                     | Vitest, en los tres paquetes                                                                    |
+| Runtime local             | Docker para PostgreSQL; Node nativo para el resto                                               |
 
 **TypeScript estricto** significa, como mínimo: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride` y `noFallthroughCasesInSwitch`. Sin `any` implícito ni explícito en `packages/engine`; sin `console.log` en código de producción.
 
@@ -48,7 +48,7 @@ La **estrategia concreta de versionado de migraciones** (nombrado, orden, detecc
 
 **Positivas:** un solo lenguaje y un solo modelo mental de punta a punta; el servidor no puede divergir del cliente en las reglas; PostgreSQL da integridad referencial y un terreno real para practicar migraciones.
 
-**Negativas / trade-offs:** se abandonan los runbooks, el CI y los patrones de despliegue ya rodados en Python del linaje de repos — hay que construirlos de nuevo para Node. Operar PostgreSQL cuesta más que Firestore (hay servidor y hay migraciones que mantener); se acepta porque ese costo *es* el ejercicio.
+**Negativas / trade-offs:** se abandonan los runbooks, el CI y los patrones de despliegue ya rodados en Python del linaje de repos — hay que construirlos de nuevo para Node. Operar PostgreSQL cuesta más que Firestore (hay servidor y hay migraciones que mantener); se acepta porque ese costo _es_ el ejercicio.
 
 ## Re-evaluación
 

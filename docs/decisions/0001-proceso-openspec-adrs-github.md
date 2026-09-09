@@ -6,9 +6,9 @@
 
 ## Contexto
 
-Proyecto nuevo y de entrenamiento: una implementación digital de *Love Letter* cuyo objetivo declarado no es la fidelidad gráfica sino demostrar arquitectura de gameplay (máquinas de estado, eventos, estado inmutable) con TypeScript estricto. Lo desarrolla una sola persona asistida por agentes IA, y el resultado se usará como pieza de portafolio para un rol de Gameplay Developer.
+Proyecto nuevo y de entrenamiento: una implementación digital de _Love Letter_ cuyo objetivo declarado no es la fidelidad gráfica sino demostrar arquitectura de gameplay (máquinas de estado, eventos, estado inmutable) con TypeScript estricto. Lo desarrolla una sola persona asistida por agentes IA, y el resultado se usará como pieza de portafolio para un rol de Gameplay Developer.
 
-Eso impone dos exigencias poco comunes en un proyecto personal: (a) la **trazabilidad requerimiento → spec → código** debe ser visible desde fuera, porque el proceso *es* parte de lo que se está demostrando; y (b) los agentes IA necesitan una fuente de contexto confiable para no reinventar decisiones ya tomadas.
+Eso impone dos exigencias poco comunes en un proyecto personal: (a) la **trazabilidad requerimiento → spec → código** debe ser visible desde fuera, porque el proceso _es_ parte de lo que se está demostrando; y (b) los agentes IA necesitan una fuente de contexto confiable para no reinventar decisiones ya tomadas.
 
 El repo hermano `strategojuegos` (y antes `sociedadsalvaje`) ya operaron este esquema. Su fallo documentado fue la **deriva entre documentación y código**: `CLAUDE.md` y `config.yaml` describiendo stacks que ya no existían, e índices de ADR congelados.
 
@@ -20,7 +20,7 @@ Opciones evaluadas para gestión del trabajo: (1) GitHub Issues + Milestones, (2
 2. **ADRs** en `docs/decisions/NNNN-titulo.md` (única ubicación), numeración monotónica, plantilla en `_template.md`, índice en `_index.md`. Un ADR `Accepted` es inmutable: se supersede con uno nuevo, nunca se edita la decisión.
 3. **GitHub** como tablero: un milestone por fase del [ROADMAP](../../ROADMAP.md); labels en tres ejes (`type:`, `area:`, `priority:`); issues con anatomía Contexto / Objetivo / Criterios de éxito / Bloqueada por. Conventional Commits en español, trunk-based con `main` protegida y squash & merge.
 4. **Regla anti-deriva**: el mismo PR que cambia stack, layout o convenciones actualiza `CLAUDE.md`, `openspec/config.yaml`, `README.md` y `_index.md`. Es parte del checklist de cierre de todo PR.
-5. **Excepción de proporcionalidad**: correcciones triviales (typo, formato, ajuste de un mensaje) pueden ir con issue + PR sin change de OpenSpec. La regla aplica a cambios de *comportamiento*.
+5. **Excepción de proporcionalidad**: correcciones triviales (typo, formato, ajuste de un mensaje) pueden ir con issue + PR sin change de OpenSpec. La regla aplica a cambios de _comportamiento_.
 
 ## Razones
 

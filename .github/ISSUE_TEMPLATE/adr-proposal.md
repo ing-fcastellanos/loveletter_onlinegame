@@ -1,8 +1,8 @@
 ---
 name: Propuesta de ADR
 about: Registrar una decisión arquitectónica no trivial (docs/decisions/)
-title: "ADR — "
-labels: "type: adr"
+title: 'ADR — '
+labels: 'type: adr'
 ---
 
 <!--
