@@ -170,7 +170,14 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 ## Convenciones de código
 
 - Commits: Conventional Commits en español (`feat|fix|docs|style|refactor|perf|test|chore|ci|revert`), header ≤ 100 chars.
-- Branching: trunk-based, `main` protegida, ramas `<tipo>/<slug>` de vida corta, squash & merge.
+- Branching: trunk-based, ramas `<tipo>/<slug>` de vida corta, squash & merge.
+- **`main` está protegida en el servidor**, no solo por el hook local:
+  - Los cambios entran obligatoriamente por PR. El push directo lo rechaza GitHub con `GH006`, y la protección **aplica también a los administradores**: no hay salida por ser dueño del repo.
+  - Cuatro checks obligatorios: `typecheck`, `test`, `lint` y `commit-convention`.
+  - Force-push y borrado de `main` prohibidos; historia lineal exigida.
+  - **Cero aprobaciones requeridas**, a propósito: con un solo desarrollador, exigir una revisión bloquearía el repositorio por completo — nadie puede aprobar su propio PR. Cuando entre una segunda persona, subir este número es el primer ajuste.
+  - Squash es el único método de merge, y el título del PR se vuelve el mensaje de commit (`squash_merge_commit_title = PR_TITLE`). Por eso `commit-convention` valida el título: es literalmente lo que queda en la historia.
+  - **Romper el cristal** requiere retirar la protección desde la configuración del repositorio, hacer el cambio y volver a ponerla. Es deliberadamente incómodo y deja rastro en el log de auditoría.
 - **Código en inglés** (identificadores, tipos, nombres de archivo), **UI y documentación en español**. Los términos del dominio se nombran en inglés en el código (`Guard`, `Handmaid`, `Countess`) y se traducen solo en la capa de presentación.
 - Sin `enum` ni `namespace` (ADR 0005). Imports relativos con extensión `.ts`.
 - Toda regla de juego nueva o modificada lleva su prueba unitaria en el mismo cambio.
@@ -186,7 +193,6 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 ## Cosas que **no** existen todavía (no las inventes)
 
 - **No hay reglas de juego.** Los tres workspaces ya existen y se enlazan, pero `packages/engine` solo tiene marcadores mínimos (`GameState`, `PlayerView`, `project` y `CARD`) que existen para sostener la frontera del `exports`. El modelo real llega con el issue #7 y las reglas con la Fase 2.
-- No hay protección de `main` server-side ni checks obligatorios: es el issue #6. Los checks disponibles para marcar como required son `typecheck`, `test`, `lint` y `commit-convention` (`.github/workflows/pr-gates.yml`). Interinamente, el hook `pre-push` local rechaza el push directo a `main`.
 - No hay UI: `apps/web` es un punto de entrada que prueba el enlace con el motor. La interfaz real es la Fase 3.
 - No hay servidor, ni base de datos, ni persistencia: `services/api` es un esqueleto. Fastify, WebSocket y PostgreSQL son la Fase 4.
 - No hay bots, ranking, chat, cuentas ni arte propio — ver "Fuera de alcance" en [ROADMAP.md](ROADMAP.md).
