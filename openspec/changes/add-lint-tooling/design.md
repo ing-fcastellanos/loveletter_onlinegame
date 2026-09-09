@@ -49,6 +49,8 @@ En la combinación ESLint + Prettier hace falta `eslint-config-prettier` para ap
 - **oxlint es joven comparado con ESLint** → mitigado porque los nombres de regla son compatibles: la intención es portable si hubiera que migrar. Registrado en el ADR 0006.
 - **El commit de formateo ensucia `git blame`** → se acepta; es un costo de una sola vez y se puede ignorar con `.git-blame-ignore-revs` si llegara a estorbar.
 
-## Open Questions
+## Decisión resuelta: dónde vive el requisito de determinismo
 
-- **Dónde vive el requisito de determinismo.** Este change lo añade a `engine-package` porque es hoy la invariante sin ninguna red. Su otra casa posible es el issue #8, que construye el PRNG sembrado y establece el contrato en positivo. No cambia las tareas de este change en ningún caso: la regla de lint se configura igual. Solo cambia en qué change se archiva el requisito.
+Se evaluó dejarlo para el issue #8, que construye el PRNG sembrado y establece el contrato en positivo. Se decidió añadirlo aquí, a `engine-package`, porque este es el change que lo vuelve **verificable**: hasta ahora la prohibición existía en el ADR 0004 y en prosa, sin nada que la comprobara. Un requisito que nadie puede violar sin que algo se ponga rojo es un requisito de verdad; antes era una intención.
+
+El issue #8 seguirá siendo dueño del contrato positivo —cómo se inyecta la semilla, cómo baraja el PRNG— y ampliará este requisito o añadirá los suyos sobre él.
