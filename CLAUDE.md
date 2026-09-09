@@ -186,8 +186,7 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 ## Cosas que **no** existen todavía (no las inventes)
 
 - **No hay reglas de juego.** Los tres workspaces ya existen y se enlazan, pero `packages/engine` solo tiene marcadores mínimos (`GameState`, `PlayerView`, `project` y `CARD`) que existen para sostener la frontera del `exports`. El modelo real llega con el issue #7 y las reglas con la Fase 2.
-- No hay CI todavía: el workflow de PR gates es el issue #5. Los comandos que ejecutará (`lint`, `format:check`, `typecheck`, `test`) ya existen.
-- No hay protección de `main` server-side. Interinamente: el hook `pre-push` local rechaza push directo a `main`.
+- No hay protección de `main` server-side ni checks obligatorios: es el issue #6. Los checks disponibles para marcar como required son `typecheck`, `test`, `lint` y `commit-convention` (`.github/workflows/pr-gates.yml`). Interinamente, el hook `pre-push` local rechaza el push directo a `main`.
 - No hay UI: `apps/web` es un punto de entrada que prueba el enlace con el motor. La interfaz real es la Fase 3.
 - No hay servidor, ni base de datos, ni persistencia: `services/api` es un esqueleto. Fastify, WebSocket y PostgreSQL son la Fase 4.
 - No hay bots, ranking, chat, cuentas ni arte propio — ver "Fuera de alcance" en [ROADMAP.md](ROADMAP.md).
