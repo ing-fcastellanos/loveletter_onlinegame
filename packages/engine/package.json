@@ -1,0 +1,21 @@
+{
+  "name": "@loveletter/engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Motor de reglas de Love Letter. TypeScript puro, cero dependencias de runtime, sin DOM y sin APIs de Node. Se distribuye como c\u00f3digo fuente, sin build (ADR 0005).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "default": "./src/server.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "test": "vitest run --coverage"
+  }
+}

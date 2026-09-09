@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Único workspace que declara el DOM. `types: []` evita que los tipos de Node,
+    // instalados por services/api, se cuelen en el cliente.
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": []
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
+}

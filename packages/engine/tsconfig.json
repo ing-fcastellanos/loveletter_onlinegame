@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Sin `lib` de DOM y con `types` vacío: el motor no puede referirse a `document`
+    // ni a `process` aunque estén instalados en la raíz (ADR 0002, ADR 0005).
+    "types": []
+  },
+  "include": ["src/**/*.ts"]
+}

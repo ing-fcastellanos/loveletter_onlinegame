@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Las pruebas sí pueden usar APIs de Node (ejecutan el compilador y leen archivos);
+    // el motor en `src/` no. Por eso son dos proyectos y no uno.
+    "types": ["node"]
+  },
+  "include": ["tests/**/*.ts", "vitest.config.ts"],
+  "exclude": ["tests/fixtures/**"]
+}
