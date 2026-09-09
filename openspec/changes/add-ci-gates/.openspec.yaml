@@ -1,0 +1,6 @@
+schema: spec-driven
+created: 2026-09-08
+# Infraestructura de desarrollo: no cambia el comportamiento del producto, así que no
+# hay delta de spec. Las specs describen lo que el sistema hace; un workflow de CI
+# describe cómo se verifica el repositorio, que es otra cosa.
+skip_specs: true
