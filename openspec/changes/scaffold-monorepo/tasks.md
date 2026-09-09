@@ -35,7 +35,60 @@
 
 ## 6. Verificación
 
-- [ ] 6.1 En un clon limpio del repositorio: `npm install`, `npm run typecheck` y `npm test` pasan sin ningún paso intermedio; pegar la salida real de los tres comandos.
-- [ ] 6.2 Confirmar contra los cinco Requirements de `specs/engine-package/spec.md` que cada escenario tiene una prueba o una verificación manual documentada, y anotar cuál cubre a cuál.
-- [ ] 6.3 Confirmar que ningún módulo de `apps/web` importa desde `@loveletter/engine/server` (Requirement "La autoridad completa vive tras un subpath explícito", segundo escenario); pegar la salida de la búsqueda.
-- [ ] 6.4 Cerrar registrando las desviaciones del plan que hayan ocurrido y `openspec validate scaffold-monorepo --strict` en verde.
+- [x] 6.1 En un clon limpio del repositorio: `npm install`, `npm run typecheck` y `npm test` pasan sin ningún paso intermedio; pegar la salida real de los tres comandos.
+- [x] 6.2 Confirmar contra los cinco Requirements de `specs/engine-package/spec.md` que cada escenario tiene una prueba o una verificación manual documentada, y anotar cuál cubre a cuál.
+- [x] 6.3 Confirmar que ningún módulo de `apps/web` importa desde `@loveletter/engine/server` (Requirement "La autoridad completa vive tras un subpath explícito", segundo escenario); pegar la salida de la búsqueda.
+- [x] 6.4 Cerrar registrando las desviaciones del plan que hayan ocurrido y `openspec validate scaffold-monorepo --strict` en verde.
+
+### Evidencia
+
+**6.1 — Clon limpio** (`git clone -b chore/scaffolding-monorepo` a un directorio nuevo):
+
+```
+$ npm install
+found 0 vulnerabilities
+
+$ npm run typecheck
+> @loveletter/engine@0.0.0 typecheck   (tsconfig.json && tsconfig.test.json)
+> @loveletter/web@0.0.0 typecheck
+> @loveletter/api@0.0.0 typecheck
+(sin errores)
+
+$ npm test
+ Test Files  2 passed (2)   Tests  6 passed (6)   # packages/engine
+ Test Files  1 passed (1)   Tests  1 passed (1)   # apps/web
+ Test Files  1 passed (1)   Tests  1 passed (1)   # services/api
+```
+
+Ningún paso intermedio: no se compiló el motor en ningún momento.
+
+**6.2 — Cobertura de los Requirements de `specs/engine-package/spec.md`:**
+
+| Requirement · Scenario | Verificado por |
+|---|---|
+| Se consume sin build · servidor | `node services/api/src/main.ts` en clon limpio imprime la proyección |
+| Se consume sin build · navegador | El dev server de Vite sirve `main.ts` resolviendo el import a `packages/engine/src/client.ts`; `vite build` produce el bundle |
+| Superficie por defecto no expone estado oculto · inalcanzable | `tests/boundary.test.ts` — ejecuta el compilador sobre `fixtures/forbidden-import.ts` y exige `TS2305` |
+| Superficie por defecto no expone estado oculto · vista alcanzable | `tests/contract.test.ts` — usa `PlayerView` y `CARD` desde el default |
+| Autoridad tras subpath · servidor accede | `services/api/tests/engine-surface.test.ts` y `tests/contract.test.ts` |
+| Autoridad tras subpath · cliente no la usa | Tarea 6.3 |
+| Sin dependencias de runtime · manifiesto | `tests/contract.test.ts` — lee `package.json` y exige `dependencies` vacío |
+| Sin dependencias de runtime · sin APIs de entorno | `packages/engine/tsconfig.json` con `lib: [esnext]` y `types: []`; verificado a mano: `TS2584` para `document`, `TS2591` para `process` |
+| Solo sintaxis borrable · se rechaza al verificar tipos | `tests/boundary.test.ts` — exige `TS1294` sobre `fixtures/non-erasable.ts` |
+| Solo sintaxis borrable · valores del dominio sin construcciones no borrables | `packages/engine/src/cards.ts` — objeto `as const` con uniones literales |
+
+**Pruebas de mutación** (que las pruebas se pongan rojas cuando deben):
+
+- Re-exportar `GameState` desde `src/client.ts` → `boundary.test.ts` falla. Revertido.
+- Añadir una `dependencies` cualquiera al motor → `contract.test.ts` falla. Revertido.
+
+**6.3 — Imports de `apps/web`:**
+
+```
+apps/web/src/main.ts:11:                 import { CARD } from '@loveletter/engine';
+apps/web/tests/engine-surface.test.ts:9: import { CARD } from '@loveletter/engine';
+```
+
+Ninguno usa `@loveletter/engine/server`.
+
+**6.4 — Desviaciones registradas:** tareas 2.2 (el `lib` por defecto incluía DOM), 4.1 (Vitest en la raíz para no ensuciar el manifiesto del motor), 4.2 (sin desviación: Vitest digirió los imports `.ts`) y 4.8 (`web` y `api` no verificaban sus pruebas). `openspec validate scaffold-monorepo --strict`: **valid**.
