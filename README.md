@@ -1,5 +1,10 @@
 # Love Letter en línea
 
+[![PR gates](https://github.com/ing-fcastellanos/loveletter_onlinegame/actions/workflows/pr-gates.yml/badge.svg)](https://github.com/ing-fcastellanos/loveletter_onlinegame/actions/workflows/pr-gates.yml)
+
+<!-- El badge depende del nombre del archivo del workflow: renombrar
+     .github/workflows/pr-gates.yml rompe esta imagen en silencio. -->
+
 Implementación digital del juego de mesa **Love Letter** (edición clásica, 16 cartas, 2–4 jugadores), construida desde cero en TypeScript.
 
 > **Proyecto de entrenamiento.** No es un producto comercial y no está afiliado ni respaldado por Seiji Kanai, Z-Man Games ni Alderac Entertainment Group. _Love Letter_ es propiedad de sus respectivos titulares. Este repositorio reimplementa las reglas con fines de aprendizaje y portafolio; el arte y los textos son propios.
