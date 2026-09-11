@@ -45,7 +45,49 @@
 
 ## 8. Verificación
 
-- [ ] 8.1 En un clon limpio: `npm install`, `npm run lint`, `npm run format:check`, `npm run typecheck` y `npm test` pasan; pegar la salida real.
-- [ ] 8.2 Mapear cada escenario de `specs/game-state/spec.md` a su verificación —directiva de `game-state.types.ts`, prueba de `model.test.ts` o prueba de proyección— y anotar la tabla.
-- [ ] 8.3 Confirmar que `PlayerView` no expone nada de la información oculta nueva (carta de un rival, carta robada, orden del mazo) citando la prueba de la tarea 3.3.
-- [ ] 8.4 Cerrar registrando las desviaciones del plan y `openspec validate model-domain --strict` en verde.
+- [x] 8.1 En un clon limpio: `npm install`, `npm run lint`, `npm run format:check`, `npm run typecheck` y `npm test` pasan; pegar la salida real.
+- [x] 8.2 Mapear cada escenario de `specs/game-state/spec.md` a su verificación —directiva de `game-state.types.ts`, prueba de `model.test.ts` o prueba de proyección— y anotar la tabla.
+- [x] 8.3 Confirmar que `PlayerView` no expone nada de la información oculta nueva (carta de un rival, carta robada, orden del mazo) citando la prueba de la tarea 3.3.
+- [x] 8.4 Cerrar registrando las desviaciones del plan y `openspec validate model-domain --strict` en verde.
+
+### Evidencia
+
+**8.1 — Clon limpio** (`git clone -b feat/model-domain`), sin pasos intermedios:
+
+```
+npm run lint          PASA
+npm run format:check  PASA
+npm run typecheck     PASA   # incluye los 13 contratos de game-state.types.ts
+npm run test          PASA
+Test Files  3 passed (3)   Tests  15 passed (15)   # packages/engine
+Test Files  1 passed (1)   Tests  1 passed (1)   # apps/web
+Test Files  1 passed (1)   Tests  2 passed (2)   # services/api
+```
+
+**8.2 — Cada escenario de `specs/game-state/spec.md` y su verificación:**
+
+| Requirement · Scenario                                         | Verificado por                                                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Ocho personajes · valores del juego clásico                    | `model.test.ts` — `Object.entries(CARD)` exacto, del 1 al 8 en orden                              |
+| Ocho personajes · carta ajena no representable                 | `game-state.types.ts` — `c1: CardName = 'Joker'`                                                  |
+| Una carta · activo sin carta                                   | `game-state.types.ts` — `p0`                                                                      |
+| Una carta · dos cartas, tenga o no el turno                    | `game-state.types.ts` — `p2`; mutación 6.1                                                        |
+| Carta robada · antes de robar no hay                           | `game-state.types.ts` — `t1`; mutación 6.2                                                        |
+| Carta robada · tras robar, dos cartas para el jugador en turno | `model.test.ts` — `handOf` en `play` devuelve `['Guard', 'Countess']`                             |
+| Carta robada · los demás siguen con una                        | `model.test.ts` — `handOf` de Beto devuelve `['Baron']`                                           |
+| Eliminado · con carta no representable                         | `game-state.types.ts` — `e1`                                                                      |
+| Eliminado · no tiene mano                                      | `model.test.ts` — `handOf` de Caro devuelve `null`                                                |
+| Eliminado · conserva sus descartes                             | `model.test.ts` — los descartes de Caro siguen en la ronda                                        |
+| Fichas · no viven en la ronda                                  | `game-state.types.ts` — `RoundPlayer['tokens']`                                                   |
+| Fichas · la partida no lleva carta ni descartes                | `game-state.types.ts` — `Player['held']`, `Player['discards']`                                    |
+| Descubiertas · tres                                            | `game-state.types.ts` — `partidaADos` compila                                                     |
+| Descubiertas · ninguna                                         | `game-state.types.ts` — `rondaATres` compila                                                      |
+| Descubiertas · otra cantidad                                   | `game-state.types.ts` — `f2` con dos cartas                                                       |
+| Inmutable · asignar un campo                                   | `game-state.types.ts` — `player.tokens = 3`                                                       |
+| Inmutable · modificar una colección                            | `game-state.types.ts` — `discards.push(...)`                                                      |
+| Valor · no se lee sin distinguir el éxito                      | `game-state.types.ts` — `result.value` sin estrechar; `model.test.ts` lo lee tras `ok`            |
+| Valor · código y datos, sin texto                              | `game-state.types.ts` — `v1` con `message`; mutación 6.3; `model.test.ts` — forma exacta de `err` |
+
+**8.3 — `PlayerView` no expone la información oculta nueva.** `contract.test.ts` construye un turno de Beto en fase `play` con la Condesa robada y proyecta para Ana: en la vista serializada no aparece la carta robada de Beto (Condesa), ni la carta de ningún rival (Rey, Sirvienta), ni el mazo (Guardia, Sacerdote), ni la carta apartada (Princesa).
+
+**8.4 — Desviaciones registradas:** tarea 4.1 (dos casos positivos en vez de uno, porque el combinado describía un estado que el juego no admite), 4.3 (`handOf` produce `TS2724`, no `TS2305`) y 7.4 (también se actualizó el párrafo de estado del README). Sin desviación en 2.1 (`protected` es válido como nombre de propiedad).
