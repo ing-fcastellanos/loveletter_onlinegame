@@ -181,13 +181,17 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 
 - Commits: Conventional Commits en español (`feat|fix|docs|style|refactor|perf|test|chore|ci|revert`), header ≤ 100 chars.
 - Branching: trunk-based, ramas `<tipo>/<slug>` de vida corta, squash & merge.
-- **`main` está protegida en el servidor**, no solo por el hook local:
+- **`main` está protegida en el servidor**, no solo por el hook local, y por **dos capas que deben decir lo mismo**:
+  - La **protección de rama clásica** (Settings → Branches), configurada en el issue #6. Aplica también a los administradores (`enforce_admins`).
+  - El **ruleset `main`** (Settings → Rules), creado por el dueño del repositorio. Exige PR y los mismos cuatro checks, y concede a los administradores bypass `always` **de sus propias reglas**. Ese bypass no abre ninguna salida real: saltarse el ruleset no se salta la protección clásica, que sigue exigiendo PR y checks también a los administradores.
+  - **Cualquier cambio de política se aplica en las dos capas.** El PR #41 quedó bloqueado precisamente porque divergían: la clásica pedía 0 aprobaciones y el ruleset 1.
+  - En detalle, lo que exigen ambas:
   - Los cambios entran obligatoriamente por PR. El push directo lo rechaza GitHub con `GH006`, y la protección **aplica también a los administradores**: no hay salida por ser dueño del repo.
   - Cuatro checks obligatorios: `typecheck`, `test`, `lint` y `commit-convention`.
   - Force-push y borrado de `main` prohibidos; historia lineal exigida.
-  - **Cero aprobaciones requeridas**, a propósito: con un solo desarrollador, exigir una revisión bloquearía el repositorio por completo — nadie puede aprobar su propio PR. Cuando entre una segunda persona, subir este número es el primer ajuste.
-  - Squash es el único método de merge, y el título del PR se vuelve el mensaje de commit (`squash_merge_commit_title = PR_TITLE`). Por eso `commit-convention` valida el título: es literalmente lo que queda en la historia.
-  - **Romper el cristal** requiere retirar la protección desde la configuración del repositorio, hacer el cambio y volver a ponerla. Es deliberadamente incómodo y deja rastro en el log de auditoría.
+  - **Cero aprobaciones requeridas en las dos capas**, a propósito: con un solo desarrollador, exigir una revisión bloquearía el repositorio por completo — nadie puede aprobar su propio PR. Cuando entre una segunda persona, subir este número es el primer ajuste.
+  - Squash es el único método de merge —lo fija la configuración del repositorio, que prevalece aunque el ruleset admita los tres—, y el título del PR se vuelve el mensaje de commit (`squash_merge_commit_title = PR_TITLE`). Por eso `commit-convention` valida el título: es literalmente lo que queda en la historia.
+  - **Romper el cristal** requiere retirar la protección clásica desde la configuración del repositorio (el ruleset ya lo permite con su bypass), hacer el cambio y volver a ponerla. Es deliberadamente incómodo y deja rastro en el log de auditoría.
 - **Código en inglés** (identificadores, tipos, nombres de archivo), **UI y documentación en español**. Los términos del dominio se nombran en inglés en el código (`Guard`, `Handmaid`, `Countess`) y se traducen solo en la capa de presentación.
 - Sin `enum` ni `namespace` (ADR 0005). Imports relativos con extensión `.ts`.
 - Toda regla de juego nueva o modificada lleva su prueba unitaria en el mismo cambio.
