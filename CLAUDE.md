@@ -44,13 +44,23 @@ Edición clásica, 16 cartas. **No** confundir con la edición 2019 (21 cartas, 
 - El Barón empatado **no elimina a nadie**.
 - La obligación de la Condesa se valida **antes** de la jugada, no como efecto.
 
+### Modelo de estado
+
+Lo fija el [ADR 0007](docs/decisions/0007-modelo-de-estado-dos-capas-y-turno.md). Tres ideas que cualquier regla nueva debe respetar:
+
+- **Dos capas.** `Player` (id, nombre, fichas) dura la partida; `Round` (mazo, carta apartada, descubiertas, jugadores de ronda, turno) dura una ronda. Iniciar una ronda es construir un `Round` nuevo, nunca resetear campos.
+- **Cada jugador activo sostiene exactamente una carta** (`held`). La carta robada vive en el **turno**, que es una máquina de estados `draw → play`: dos cartas solo existen para el jugador en turno y solo en `play`. La mano de dos cartas (`Hand`) es una vista derivada que calcula `handOf`; el estado no la almacena.
+- **Un eliminado no tiene carta, pero conserva sus descartes**: son públicos y cuentan para el desempate.
+
+Lo que el tipo **no** puede garantizar —que el jugador del turno sea un activo, la alineación de ids entre capas, la conservación de las 16 cartas— está en la tabla del ADR 0007 con su custodio. No lo des por hecho en una regla.
+
 ## Stack — verdades del proyecto
 
 | Capa                      | Tecnología                                                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Motor (`packages/engine`) | TypeScript 7 estricto · **cero dependencias de runtime** · sin DOM · sin APIs de Node · **sin build** ([ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md)) |
 | Cliente (`apps/web`)      | Vite + TypeScript. Técnica de render (DOM vs Canvas): ADR pendiente de la Fase 3                                                                                                            |
-| Servidor (`services/api`) | Node 22+ · TypeScript · Fastify · WebSocket                                                                                                                                                 |
+| Servidor (`services/api`) | Node 24+ · TypeScript · Fastify · WebSocket                                                                                                                                                 |
 | Persistencia              | PostgreSQL con migraciones versionadas en archivos                                                                                                                                          |
 | Tests                     | Vitest                                                                                                                                                                                      |
 | Lint y formato            | **oxlint** + **Prettier** — sin ESLint ([ADR 0006](docs/decisions/0006-linter-y-formateador-oxlint-prettier.md))                                                                            |
@@ -86,7 +96,7 @@ El barajado usa un PRNG sembrado y la semilla vive dentro del estado. Misma semi
   "./server"  →  GameState, applyCommand, project    (autoridad completa)
 ```
 
-`apps/web` importa `@ll/engine`. `services/api` y las pruebas del motor importan `@ll/engine/server`. Alcanzar `GameState` desde la superficie segura es un error de compilación (`TS2305`), no una infracción de estilo. El import corto y cómodo es el que no puede filtrar información oculta; llegar al estado completo obliga a escribir `/server`, y eso se ve en el diff.
+`apps/web` importa `@loveletter/engine`. `services/api` y las pruebas del motor importan `@loveletter/engine/server`. Alcanzar `GameState` desde la superficie segura es un error de compilación (`TS2305`), no una infracción de estilo. El import corto y cómodo es el que no puede filtrar información oculta; llegar al estado completo obliga a escribir `/server`, y eso se ve en el diff.
 
 Funciona porque `legalMoves` se calcula íntegramente desde una `PlayerView`: ninguna regla de legalidad depende de información oculta ([ADR 0005](docs/decisions/0005-motor-como-codigo-fuente-y-superficie-de-cliente.md)).
 
@@ -192,7 +202,7 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 
 ## Cosas que **no** existen todavía (no las inventes)
 
-- **No hay reglas de juego.** Los tres workspaces ya existen y se enlazan, pero `packages/engine` solo tiene marcadores mínimos (`GameState`, `PlayerView`, `project` y `CARD`) que existen para sostener la frontera del `exports`. El modelo real llega con el issue #7 y las reglas con la Fase 2.
+- **No hay reglas de juego.** El modelo del estado ya existe ([ADR 0007](docs/decisions/0007-modelo-de-estado-dos-capas-y-turno.md)), pero ninguna operación lo transforma: no hay mazo ni barajado (#8), preparación de ronda (#9), ciclo de turno (#12) ni efectos (Fase 2). `PlayerView`, `project` y `Command` siguen siendo marcadores de los issues #10 y #12.
 - No hay UI: `apps/web` es un punto de entrada que prueba el enlace con el motor. La interfaz real es la Fase 3.
 - No hay servidor, ni base de datos, ni persistencia: `services/api` es un esqueleto. Fastify, WebSocket y PostgreSQL son la Fase 4.
 - No hay bots, ranking, chat, cuentas ni arte propio — ver "Fuera de alcance" en [ROADMAP.md](ROADMAP.md).

@@ -44,7 +44,7 @@ En construcción. El avance se sigue por [milestones](../../milestones), uno por
 | 3 — UI y persistencia      | Render reactivo a eventos, controles, autoguardado versionado |
 | 4 — Backend y multijugador | Servidor autoritativo, WebSocket, PostgreSQL con migraciones  |
 
-La Fase 0 ya tiene código: los tres workspaces se enlazan, `npm test` y `npm run typecheck` pasan, y la frontera del `exports` está cubierta por pruebas que ejecutan el compilador sobre fixtures que deben fallar. Todavía no hay ninguna regla del juego — esas empiezan en la Fase 1.
+La Fase 0 está completa: monorepo, TypeScript estricto, pruebas de contrato, lint que hace cumplir las invariantes, CI con cuatro checks y `main` protegida en el servidor. La Fase 1 empezó por el modelo del estado, en el que los estados que el juego no admite no compilan; todavía no hay ninguna regla del juego.
 
 ## Cómo se trabaja aquí
 
@@ -56,7 +56,7 @@ Todo cambio de comportamiento pasa por **spec-driven development** con [OpenSpec
 npm install
 ```
 
-Instala el tooling de convenciones y activa los hooks de git. Requiere Node 22 o superior.
+Instala el tooling de convenciones y activa los hooks de git. Requiere Node 24 o superior.
 
 ## Licencia
 

@@ -1,49 +1,106 @@
 /**
- * PROVISIONAL — Fase 0.
+ * El estado de una partida (ADR 0007).
  *
- * Modelo mínimo, sin reglas. Existe para que la frontera del `exports` tenga algo
- * de cada lado que probar (ADR 0005). No modela la partida: el issue #7 (Modelado
- * de datos) lo reemplaza por el modelo real.
+ * Dos capas con ciclos de vida distintos: lo que dura toda la partida (identidad y fichas
+ * de afecto) y lo que dura una ronda (carta, descartes, eliminación, protección, mazo y
+ * turno). Iniciar una ronda es construir un `Round` nuevo: no hay nada que resetear, y las
+ * fichas no se pueden tocar por accidente porque no viven ahí.
+ *
+ * El criterio de todo el módulo: un estado que el juego no admite no se puede construir.
+ * Lo que el tipo no puede expresar (integridad de identificadores, conservación de las 16
+ * cartas) está enumerado en el ADR 0007 junto con quién lo custodia.
  */
 
 import type { CardName } from './cards.ts';
 
 export type PlayerId = string;
 
+/** Nivel partida: persiste entre rondas. Información pública. */
+export type Player = {
+  readonly id: PlayerId;
+  readonly name: string;
+  readonly tokens: number;
+};
+
 /**
- * Estado autoritativo: lo sabe todo — mazo, carta apartada y semilla del PRNG.
- * Nunca sale del servidor y nunca lo consume la presentación (ADR 0004).
+ * La mano tal como la ve su dueño: una carta, o dos durante su fase de jugar. Es una vista
+ * DERIVADA; el estado nunca la almacena. La calcula `handOf`.
  */
-export type GameState = {
+export type Hand = readonly [CardName] | readonly [CardName, CardName];
+
+/**
+ * Jugador que sigue en la ronda. Sostiene exactamente una carta: la segunda carta de un
+ * turno no pertenece al jugador sino al turno, así que nadie puede tener dos fuera de él.
+ */
+export type ActivePlayer = {
+  readonly status: 'active';
+  readonly id: PlayerId;
+  readonly held: CardName;
+  readonly discards: readonly CardName[];
+  /** Protegido por la Sirvienta hasta el inicio de su siguiente turno. */
+  readonly protected: boolean;
+};
+
+/**
+ * Jugador fuera de la ronda. No tiene carta —el campo no existe—, pero conserva sus
+ * descartes: siguen sobre la mesa, son información pública y alimentan la deducción.
+ */
+export type EliminatedPlayer = {
+  readonly status: 'eliminated';
+  readonly id: PlayerId;
+  readonly discards: readonly CardName[];
+};
+
+export type RoundPlayer = ActivePlayer | EliminatedPlayer;
+
+/**
+ * El turno como máquina de estados: `draw` (aún no ha robado) → `play` (ya robó y debe
+ * descartar). La carta robada existe solo en `play`: `stage` no duplica información, es
+ * el único lugar donde vive esa carta.
+ */
+export type Turn =
+  | { readonly stage: 'draw'; readonly player: PlayerId }
+  | { readonly stage: 'play'; readonly player: PlayerId; readonly drawn: CardName };
+
+/**
+ * Una ronda. Cuando lleguen los estados terminales (issues #20 y #21) pasará a ser una
+ * unión por estado —`playing` con turno, `over` con ganador— en vez de acumular campos
+ * opcionales.
+ */
+export type Round = {
+  /** Desde 1. */
+  readonly number: number;
+  /** Orden de robo: el tope es el índice 0. */
   readonly deck: readonly CardName[];
   readonly setAside: CardName;
+  /** Tres en la partida a dos, ninguna en las demás (lo decide el setup, issue #9). */
+  readonly faceUp: readonly [] | readonly [CardName, CardName, CardName];
+  /** Orden de turno. Un eliminado cambia de variante, no desaparece del arreglo. */
+  readonly players: readonly RoundPlayer[];
+  readonly turn: Turn;
+};
+
+/** Estado autoritativo: lo sabe todo. Nunca sale del servidor (ADR 0004). */
+export type GameState = {
+  /** Provisional: el issue #8 decide si el PRNG necesita un estado más rico. */
   readonly seed: number;
+  /** Orden de asiento. */
+  readonly players: readonly Player[];
+  readonly round: Round;
 };
 
 /**
- * Lo que un jugador puede ver. La información oculta no aparece censurada sino
- * AUSENTE del tipo: el mazo es un conteo, y la carta apartada no existe aquí de
- * ninguna forma. Cuando el issue #10 la desarrolle, la regla se mantiene: nunca el
- * mazo (solo su conteo), nunca la carta apartada, y nunca la mano de otro jugador
- * salvo lo que ese jugador haya llegado a conocer por un efecto.
+ * La mano de un jugador según el turno: dos cartas para el jugador en turno en su fase de
+ * jugar, una para cualquier otro activo, y `null` para un eliminado o un id desconocido.
  */
-export type PlayerView = {
-  readonly deckCount: number;
-};
-
-/** Intención de un jugador. El issue #12 la desarrolla a los comandos reales. */
-export type Command = {
-  readonly type: 'Draw';
-  readonly playerId: PlayerId;
-};
-
-/**
- * Proyecta el estado autoritativo a lo que un jugador puede ver. Corre en memoria
- * mientras el juego es local, y en el servidor a partir de la Fase 4 (ADR 0004).
- * `playerId` todavía no se usa porque el modelo no tiene jugadores; la firma se fija
- * aquí porque es el contrato, y el issue #10 la completa.
- */
-export function project(state: GameState, playerId: PlayerId): PlayerView {
-  void playerId;
-  return { deckCount: state.deck.length };
+export function handOf(round: Round, playerId: PlayerId): Hand | null {
+  const player = round.players.find((candidate) => candidate.id === playerId);
+  if (player === undefined || player.status === 'eliminated') {
+    return null;
+  }
+  const { turn } = round;
+  if (turn.stage === 'play' && turn.player === playerId) {
+    return [player.held, turn.drawn];
+  }
+  return [player.held];
 }
