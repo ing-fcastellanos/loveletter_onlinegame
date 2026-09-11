@@ -18,8 +18,8 @@ context: |
     Se distribuye como CÓDIGO FUENTE, sin build (ADR 0005): exports apunta a los .ts de src/,
     que Node ejecuta por type-stripping y Vite procesa nativamente. Su exports parte la
     superficie y el default es el seguro: "." expone PlayerView, Command y legalMoves;
-    "./server" expone GameState, applyCommand y project. apps/web importa @ll/engine;
-    services/api y las pruebas del motor importan @ll/engine/server. Alcanzar GameState desde
+    "./server" expone GameState, applyCommand y project. apps/web importa @loveletter/engine;
+    services/api y las pruebas del motor importan @loveletter/engine/server. Alcanzar GameState desde
     la superficie segura es error de compilación (TS2305), no una infracción de estilo.
     Configuración obligatoria: module y moduleResolution en nodenext, allowImportingTsExtensions,
     verbatimModuleSyntax, noEmit y erasableSyntaxOnly. PROHIBIDOS enum, namespace y propiedades
@@ -58,6 +58,18 @@ context: |
     debe apuntarse a sí mismo y las demás cartas se descartan sin efecto; la Princesa elimina a
     quien la descarte por cualquier motivo (incluido el Príncipe); el Guardia no puede adivinar
     "Guardia"; el Barón empatado no elimina a nadie.
+
+  Modelo de estado (ADR 0007):
+  - Dos capas: Player { id, name, tokens } dura la partida; Round (deck, setAside, faceUp,
+    players, turn) dura una ronda. Iniciar una ronda es construir un Round nuevo.
+  - Cada jugador activo sostiene exactamente UNA carta (held). La carta robada vive en el
+    turno, máquina de estados draw -> play; dos cartas solo existen en play y solo para el
+    jugador en turno. La mano de dos (Hand) es una vista derivada: handOf.
+  - RoundPlayer = active | eliminated. El eliminado no tiene carta pero conserva discards.
+  - faceUp es una tupla de cero o de tres cartas. El turno referencia al jugador por id.
+  - RuleViolation: unión discriminada por code, con datos y sin texto libre.
+  - Lo que el tipo no garantiza (jugador del turno activo, alineación de ids entre capas,
+    conservación de las 16 cartas) tiene custodio asignado en el ADR 0007.
 
   Convenciones:
   - Lint con oxlint y formateo con Prettier; NO se instala ESLint (ADR 0006): el paquete

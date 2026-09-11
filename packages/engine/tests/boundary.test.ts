@@ -23,13 +23,25 @@ function typecheck(project: string): { code: number; output: string } {
   return { code: result.status ?? -1, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
 }
 
+/** Nombres que la superficie por defecto no debe exponer: todos dan acceso a información oculta. */
+const AUTHORITY_ONLY = ['GameState', 'Round', 'RoundPlayer', 'Turn', 'handOf'] as const;
+
 describe('la superficie por defecto no expone estado oculto', () => {
-  it('alcanzar el estado autoritativo desde la superficie por defecto no compila', () => {
+  it('alcanzar el estado autoritativo o el de ronda desde la superficie por defecto no compila', () => {
     const { code, output } = typecheck('packages/engine/tests/fixtures/tsconfig.forbidden.json');
 
     expect(code).not.toBe(0);
-    expect(output).toContain('TS2305');
-    expect(output).toContain('GameState');
+
+    // TS2305 ("has no exported member") o TS2724, que dice lo mismo cuando el compilador
+    // encuentra un nombre parecido que sugerir: con `handOf` propone `Hand`. En ambos
+    // casos el nombre no existe en la superficie por defecto.
+    const missing = output.split('\n').filter((line) => /error TS(2305|2724):/.test(line));
+    for (const name of AUTHORITY_ONLY) {
+      expect(
+        missing.some((line) => line.includes(`'${name}'`)),
+        name,
+      ).toBe(true);
+    }
   }, 60_000);
 });
 

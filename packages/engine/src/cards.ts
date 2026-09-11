@@ -1,14 +1,12 @@
 /**
- * PROVISIONAL — Fase 0.
+ * Los ocho personajes de la edición clásica y su valor.
  *
- * Los ocho personajes con su valor. Es información pública del juego (el valor va
- * impreso en la carta), así que pertenece a la superficie de cliente.
+ * El valor va impreso en la carta: es información pública y pertenece a las dos
+ * superficies del paquete.
  *
- * Se modela con un objeto `as const` y uniones literales en vez de `enum`: `enum`
- * emite código en tiempo de ejecución y el motor se ejecuta desde su fuente, donde
- * solo se admite sintaxis borrable (ADR 0005).
- *
- * El issue #7 (Modelado de datos) formaliza este módulo junto con el resto del dominio.
+ * Objeto `as const` con uniones literales en vez de `enum`: `enum` emite código en tiempo
+ * de ejecución y el motor se ejecuta desde su fuente, donde solo se admite sintaxis
+ * borrable (ADR 0005).
  */
 
 export const CARD = {
