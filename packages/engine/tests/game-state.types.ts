@@ -18,8 +18,12 @@ import type {
   Round,
   RoundPlayer,
   RuleViolation,
+  Seed,
   Turn,
 } from '@loveletter/engine/server';
+
+/** Este archivo no se ejecuta: basta con declarar que existe una semilla validada. */
+declare const semilla: Seed;
 
 // ── Lo que el juego admite compila ───────────────────────────────────────────────────────
 
@@ -33,7 +37,7 @@ const ana: ActivePlayer = {
 
 /** Partida a dos: tres cartas descubiertas y el turno en fase de jugar. */
 export const partidaADos: GameState = {
-  seed: 1,
+  seed: semilla,
   players: [
     { id: 'ana', name: 'Ana', tokens: 0 },
     { id: 'beto', name: 'Beto', tokens: 2 },

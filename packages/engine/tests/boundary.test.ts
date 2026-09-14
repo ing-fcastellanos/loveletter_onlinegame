@@ -24,7 +24,21 @@ function typecheck(project: string): { code: number; output: string } {
 }
 
 /** Nombres que la superficie por defecto no debe exponer: todos dan acceso a información oculta. */
-const AUTHORITY_ONLY = ['GameState', 'Round', 'RoundPlayer', 'Turn', 'handOf'] as const;
+const AUTHORITY_ONLY = [
+  'GameState',
+  'Round',
+  'RoundPlayer',
+  'Turn',
+  'handOf',
+  // La semilla y todo lo que baraja: con la semilla se calcula el mazo de cualquier ronda.
+  'Seed',
+  'InvalidSeed',
+  'toSeed',
+  'Random',
+  'roundRandom',
+  'shuffle',
+  'shuffleRound',
+] as const;
 
 describe('la superficie por defecto no expone estado oculto', () => {
   it('alcanzar el estado autoritativo o el de ronda desde la superficie por defecto no compila', () => {

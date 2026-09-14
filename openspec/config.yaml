@@ -71,6 +71,19 @@ context: |
   - Lo que el tipo no garantiza (jugador del turno activo, alineación de ids entre capas,
     conservación de las 16 cartas) tiene custodio asignado en el ADR 0007.
 
+  Aleatoriedad (ADR 0008):
+  - La semilla es un tipo marcado Seed (entero seguro no negativo) que solo se obtiene con
+    toSeed, que devuelve un Result. GameState.seed es Seed. El motor nunca genera semillas.
+  - Generador sfc32 de 128 bits. El azar de la ronda n se deriva de (semilla, n) con
+    roundRandom: el estado no guarda ningún generador, porque lo único aleatorio es el barajado.
+  - Barajado Fisher-Yates original (sacar del montón), enteros uniformes por rechazo.
+  - shuffleRound devuelve { deck, random }: cualquier otro sorteo de la ronda sale de random,
+    después del mazo.
+  - Algoritmo congelado por una prueba dorada (ronda 1, semilla 20260911): cambiar generador,
+    rechazo, barajado u orden de DECK rompe las partidas guardadas.
+  - La semilla es información oculta: Seed, toSeed y todo lo que baraja solo en ./server.
+    DECK y DECK_COMPOSITION son públicos y están también en la superficie de cliente.
+
   Convenciones:
   - Lint con oxlint y formateo con Prettier; NO se instala ESLint (ADR 0006): el paquete
     typescript 7 ya no publica la API JS del compilador y typescript-eslint no puede operar.

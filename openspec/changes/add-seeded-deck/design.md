@@ -115,13 +115,15 @@ Devuelve el mazo **y** el generador de la ronda ya consumido por el barajado. Si
 
 ### Congelar el algoritmo con una prueba dorada
 
-El #29 guardará cada partida como semilla más comandos. Si cambia el generador, el calentamiento, el rechazo, el barajado o el orden de `DECK`, todas esas partidas se reproducirían distinto. Una prueba fija el mazo exacto de la **ronda 1 con la semilla 20260911**. La exploración lo calculó con una implementación independiente en el scratchpad:
+El #29 guardará cada partida como semilla más comandos. Si cambia el generador, el calentamiento, el rechazo, el barajado o el orden de `DECK`, todas esas partidas se reproducirían distinto. Una prueba fija el mazo exacto de la **ronda 1 con la semilla 20260911**. El mazo de referencia, confirmado por dos implementaciones independientes (ver la corrección más abajo):
 
 ```
-Priest Priest Prince Guard Guard Baron Guard Guard Princess Handmaid Countess Baron Prince Handmaid Guard King
+Guard Priest Baron Guard Princess Prince Handmaid Priest Prince Guard Guard King Countess Guard Handmaid Baron
 ```
 
 La implementación del change tiene que reproducirlo sin copiar el código de la exploración: dos escrituras independientes que coinciden son mejor evidencia que una prueba escrita a partir de su propio resultado.
+
+**Corrección registrada durante la implementación.** La comprobación cruzada cumplió su función: el primer mazo registrado aquí (`Priest Priest Prince Guard Guard Baron Guard Guard Princess Handmaid Countess Baron Prince Handmaid Guard King`) no coincidió con el motor. La causa estaba en el esbozo de la exploración, no en el change: incrementaba el contador de sfc32 antes de sumarlo a la salida, y la definición canónica de PractRand lo suma antes de incrementarlo. Se verificó que el esbozo equivale exactamente al sfc32 canónico con el contador desplazado en uno (2000 de 2000 estados); que el resto de la tubería —rechazo, calentamiento, barajado y orden de `DECK`— es idéntico al de la exploración; y que un sfc32 canónico escrito aparte coincide con el del motor en 3000 de 3000 pares de semilla y ronda. El motor implementa el sfc32 canónico, y el mazo de referencia es el suyo.
 
 El campo de versión del algoritmo no se añade todavía; lo decide el #29, cuando haya partidas que versionar.
 

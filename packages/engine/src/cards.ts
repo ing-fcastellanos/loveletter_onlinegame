@@ -22,3 +22,31 @@ export const CARD = {
 
 export type CardName = keyof typeof CARD;
 export type CardValue = (typeof CARD)[CardName];
+
+/**
+ * Composición del mazo de la edición clásica: dieciséis cartas. Es información pública
+ * —cualquier jugador sabe que hay cinco Guardias— y la presentación la necesita para mostrar
+ * qué cartas quedan por salir. `satisfies` exige los ocho personajes sin ensanchar el literal.
+ */
+export const DECK_COMPOSITION = {
+  Guard: 5,
+  Priest: 2,
+  Baron: 2,
+  Handmaid: 2,
+  Prince: 2,
+  King: 1,
+  Countess: 1,
+  Princess: 1,
+} as const satisfies Record<CardName, number>;
+
+/**
+ * El mazo completo en su ORDEN CANÓNICO: los personajes en el orden de `CARD`, cada uno
+ * repetido según su composición. Es la entrada del barajado, así que forma parte del
+ * algoritmo congelado (ADR 0008): cambiar este orden cambia el mazo de cada partida guardada.
+ *
+ * La aserción es sólida: las claves de un literal `as const` son exactamente `CardName`, y
+ * `Object.keys` las devuelve en su orden de inserción.
+ */
+export const DECK: readonly CardName[] = (Object.keys(CARD) as CardName[]).flatMap((card) =>
+  Array.from({ length: DECK_COMPOSITION[card] }, () => card),
+);
