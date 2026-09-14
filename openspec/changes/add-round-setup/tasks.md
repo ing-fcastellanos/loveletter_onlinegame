@@ -43,7 +43,63 @@
 
 ## 7. Verificación
 
-- [ ] 7.1 En un clon limpio: `npm install`, `npm run lint`, `npm run format:check`, `npm run typecheck` y `npm test` pasan; pegar la salida real.
-- [ ] 7.2 Mapear cada escenario de `specs/round-setup/spec.md` a su verificación y anotar la tabla.
-- [ ] 7.3 Confirmar que `PlayerView` no expone nada de la información oculta que el setup coloca (carta apartada, cartas ajenas, orden del mazo) y que ninguna operación de setup es alcanzable desde la superficie de cliente, citando las tareas 3.1 y la prueba de proyección existente.
-- [ ] 7.4 Redactar aquí la nota que se publicará con el PR, en el issue #9: la parte de su criterio sobre las vistas se cumple en el #10. Cerrar registrando las desviaciones del plan y `openspec validate add-round-setup --strict` en verde.
+- [x] 7.1 En un clon limpio: `npm install`, `npm run lint`, `npm run format:check`, `npm run typecheck` y `npm test` pasan; pegar la salida real.
+- [x] 7.2 Mapear cada escenario de `specs/round-setup/spec.md` a su verificación y anotar la tabla.
+- [x] 7.3 Confirmar que `PlayerView` no expone nada de la información oculta que el setup coloca (carta apartada, cartas ajenas, orden del mazo) y que ninguna operación de setup es alcanzable desde la superficie de cliente, citando las tareas 3.1 y la prueba de proyección existente.
+- [x] 7.4 Redactar aquí la nota que se publicará con el PR, en el issue #9: la parte de su criterio sobre las vistas se cumple en el #10. Cerrar registrando las desviaciones del plan y `openspec validate add-round-setup --strict` en verde.
+
+### Evidencia
+
+**7.1 — Clon limpio** (`git clone -b feat/round-setup`), sin pasos intermedios:
+
+```
+npm run lint          PASA
+npm run format:check  PASA
+npm run typecheck     PASA
+npm run test          PASA
+Test Files  5 passed (5)   Tests  52 passed (52)   # packages/engine
+Test Files  1 passed (1)   Tests  1 passed (1)   # apps/web
+Test Files  1 passed (1)   Tests  2 passed (2)   # services/api
+```
+
+**7.2 — Cada escenario de `specs/round-setup/spec.md` y su verificación** (en `setup.test.ts` salvo que se indique):
+
+| Requirement · Scenario                                           | Verificado por                                                                                     |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Jugadores · dos, tres o cuatro inician una partida               | construye partida con 2, 3 y 4 asientos                                                            |
+| Jugadores · una cantidad fuera de rango se rechaza               | 0, 1 y 5 asientos → `InvalidPlayerCount` con la cantidad, sin lanzar                               |
+| Identificadores · un repetido se rechaza                         | `ana, beto, beto, ana` → `DuplicatePlayerId` con `beto`; también en `dealRound`                    |
+| Desde cero · fichas en cero y primera ronda                      | fichas en cero y ronda 1, con 2, 3 y 4 jugadores                                                   |
+| Desde cero · los jugadores de la ronda coinciden                 | mismos ids en el mismo orden, activos, sin descartes ni protección; mutación 5.5                   |
+| Fuera de juego · la apartada es la primera del mazo              | contra `shuffleRound(seed, 1).deck[0]`, con 2, 3 y 4 jugadores                                     |
+| Fuera de juego · a dos se descubren la segunda a la cuarta       | contra `deck.slice(1, 4)`                                                                          |
+| Fuera de juego · con tres o cuatro no se descubre ninguna        | mutación 5.1                                                                                       |
+| Por asiento · reparto en orden de asiento                        | por identificador contra el mazo de la ronda; mutaciones 5.2 y 5.5                                 |
+| Por asiento · quien empieza no cambia lo que recibe cada asiento | `dealRound` con cada jugador como quien empieza, por identificador                                 |
+| Mazo · tamaño según el número de jugadores                       | 10, 12 y 11                                                                                        |
+| Mazo · ninguna carta se pierde ni se duplica                     | 500 semillas por cada número de jugadores; mutación 5.1                                            |
+| Sorteo · la ronda empieza con el sorteado antes de robar         | turno en `draw` con un jugador sentado                                                             |
+| Sorteo · el sorteo no altera el mazo                             | la ronda de `startMatch` es idéntica, salvo el turno, a la de `dealRound` sin sorteo               |
+| Sorteo · es uniforme                                             | χ² sobre 4000 semillas por cada número de jugadores, bajo los críticos; mutación 5.3               |
+| Quien empieza dado · la ronda empieza con quien se indica        | cada jugador de una partida a tres                                                                 |
+| Quien empieza dado · el número de ronda determina el mazo        | ronda 5 contra `shuffleRound(seed, 5)`, por identificador                                          |
+| Quien empieza dado · debe estar sentado                          | `zoe` → `UnknownFirstPlayer`, sin lanzar                                                           |
+| Quien empieza dado · el número de ronda es un entero positivo    | 0, -1, 1,5 (y 2^32) → `InvalidRoundNumber`, sin lanzar; mutación 5.4                               |
+| Congelado · misma semilla y asientos, misma partida              | con 2, 3 y 4 jugadores                                                                             |
+| Congelado · la referencia produce el setup de referencia         | prueba dorada por identificador; coincide con el prototipo de la exploración; mutaciones 5.2 y 5.5 |
+
+**7.3 —** `PlayerView` no cambió: sigue exponiendo solo `deckCount`, así que no alcanza la carta apartada, la carta de ningún rival ni el orden del mazo que el setup coloca en el estado (la prueba de proyección de `contract.test.ts` sigue en verde). Ninguna operación de preparación es alcanzable desde la superficie de cliente: `startMatch`, `dealRound`, `Seat`, `SetupViolation` y `FullDeck` están en la lista de `boundary.test.ts` (tarea 3.1).
+
+**7.4 — Nota para el issue #9**, que se publica con el PR:
+
+> Nota de alcance: el criterio de éxito «Las 3 descubiertas aparecen en la vista de todos los jugadores; la apartada, en la de ninguno» se cumple en el #10, que tiene ese objetivo y estaba bloqueado por este issue. El PR deja las cartas colocadas en el estado —las descubiertas como información pública y la apartada oculta— y lo prueba; `PlayerView` sigue siendo el marcador del #10.
+
+**Desviaciones registradas:**
+
+- **2.2** — `InvalidRoundNumber` rechaza también los enteros mayores que 2^32 − 1, que `roundRandom` reduciría en silencio.
+- **4.8** — se quitó de la prueba una aserción de no nulo que además solo comprobaba `.ok === false`; ahora exige el error exacto.
+- **4.5, 4.8 y 4.9** — las cartas se comprueban por identificador de jugador: la mutación 5.5 demostró que compararlas por posición ocultaba una ronda desalineada.
+- **6.2** — el índice de ADRs marca el 0007 con su fe de erratas.
+- **6.3** — `CLAUDE.md` gana una subsección "Preparación de ronda".
+
+`openspec validate add-round-setup --strict`: **valid**.
