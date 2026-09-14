@@ -85,6 +85,14 @@ En `PlayerView` lo oculto **no existe como dato censurado**: el mazo es `deckCou
 
 El barajado usa un PRNG sembrado y la semilla vive dentro del estado. Misma semilla + misma secuencia de comandos = misma partida, carta por carta. De ahí salen los tests deterministas, los replays y la re-verificación del servidor.
 
+Cómo, según el [ADR 0008](docs/decisions/0008-aleatoriedad-sfc32-semilla-por-ronda.md):
+
+- **La semilla es un tipo marcado `Seed`** que solo se obtiene con `toSeed`, que devuelve un `Result`. Un número sin validar no compila como semilla: así no se puede truncar en silencio.
+- **Generador sfc32 de 128 bits.** El azar de la ronda `n` se deriva de (semilla, `n`) con `roundRandom`; el estado no guarda ningún generador, porque en la edición clásica lo único aleatorio es el barajado.
+- **`shuffleRound` devuelve el mazo y el generador ya consumido.** Cualquier otro sorteo de la ronda sale de ese generador, después del mazo.
+- **El algoritmo está congelado** por una prueba dorada (ronda 1, semilla 20260911). Tocar el generador, el rechazo, el barajado o el orden de `DECK` rompe las partidas guardadas: exige versión y migración.
+- **La semilla es información oculta**: con ella se calcula el mazo de cualquier ronda. Ella y todo lo que baraja viven solo en `./server`, y ninguna vista de jugador la contiene.
+
 ### Comando → `Result<{ state, events }>`
 
 `applyCommand(state, cmd)` devuelve un `Result` con el estado nuevo y los eventos. Estado **inmutable**: nunca se muta en sitio. Jugada ilegal = valor de retorno (`RuleViolation`), **no** una excepción. Los eventos llevan **audiencia** (público o lista de jugadores): así el conocimiento privado del Sacerdote se deriva del log filtrado, sin una estructura paralela de "quién sabe qué".
@@ -206,7 +214,7 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 
 ## Cosas que **no** existen todavía (no las inventes)
 
-- **No hay reglas de juego.** El modelo del estado ya existe ([ADR 0007](docs/decisions/0007-modelo-de-estado-dos-capas-y-turno.md)), pero ninguna operación lo transforma: no hay mazo ni barajado (#8), preparación de ronda (#9), ciclo de turno (#12) ni efectos (Fase 2). `PlayerView`, `project` y `Command` siguen siendo marcadores de los issues #10 y #12.
+- **No hay reglas de juego.** El modelo del estado ya existe ([ADR 0007](docs/decisions/0007-modelo-de-estado-dos-capas-y-turno.md)), pero ninguna operación lo transforma: no hay preparación de ronda (#9), ciclo de turno (#12) ni efectos (Fase 2). El mazo y su barajado sí existen ([ADR 0008](docs/decisions/0008-aleatoriedad-sfc32-semilla-por-ronda.md)), pero nada reparte todavía. `PlayerView`, `project` y `Command` siguen siendo marcadores de los issues #10 y #12.
 - No hay UI: `apps/web` es un punto de entrada que prueba el enlace con el motor. La interfaz real es la Fase 3.
 - No hay servidor, ni base de datos, ni persistencia: `services/api` es un esqueleto. Fastify, WebSocket y PostgreSQL son la Fase 4.
 - No hay bots, ranking, chat, cuentas ni arte propio — ver "Fuera de alcance" en [ROADMAP.md](ROADMAP.md).

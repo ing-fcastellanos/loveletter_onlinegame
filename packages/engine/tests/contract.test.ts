@@ -7,10 +7,12 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import { CARD } from '@loveletter/engine';
+import { CARD, DECK, DECK_COMPOSITION } from '@loveletter/engine';
 import type { Hand, Player, PlayerView } from '@loveletter/engine';
 import { project } from '@loveletter/engine/server';
 import type { GameState } from '@loveletter/engine/server';
+
+import { testSeed } from './support/seed.ts';
 
 describe('la vista proyectada sí es alcanzable desde la superficie por defecto', () => {
   it('los tipos públicos son utilizables', () => {
@@ -25,13 +27,18 @@ describe('la vista proyectada sí es alcanzable desde la superficie por defecto'
     expect(CARD.Guard).toBe(1);
     expect(CARD.Princess).toBe(8);
   });
+
+  it('la composición del mazo es información pública', () => {
+    expect(DECK).toHaveLength(16);
+    expect(DECK_COMPOSITION.Guard).toBe(5);
+  });
 });
 
 describe('la autoridad completa vive tras un subpath explícito', () => {
   it('la proyección no deja pasar ninguna carta que el jugador no puede ver', () => {
     // Turno de Beto, en fase de jugar: robó la Condesa. Proyectamos para Ana.
     const state: GameState = {
-      seed: 1,
+      seed: testSeed(987654321),
       players: [
         { id: 'ana', name: 'Ana', tokens: 0 },
         { id: 'beto', name: 'Beto', tokens: 0 },
@@ -62,6 +69,9 @@ describe('la autoridad completa vive tras un subpath explícito', () => {
     for (const hidden of ['Guard', 'Priest', 'Princess', 'King', 'Handmaid', 'Countess']) {
       expect(serialized, hidden).not.toContain(hidden);
     }
+
+    // Y la semilla: con ella se calcula el mazo de cualquier ronda (ADR 0008).
+    expect(serialized).not.toContain('987654321');
   });
 });
 

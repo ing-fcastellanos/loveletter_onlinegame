@@ -8,11 +8,18 @@
  * Fastify, WebSocket y PostgreSQL llegan en la Fase 4 (issues #27-#33).
  */
 
-import { project } from '@loveletter/engine/server';
+import { project, toSeed } from '@loveletter/engine/server';
 import type { GameState } from '@loveletter/engine/server';
 
+// La semilla la genera quien aloja el motor y el motor solo la valida (ADR 0008).
+const seed = toSeed(20260911);
+if (!seed.ok) {
+  process.stderr.write(`semilla inválida: ${seed.error.value}\n`);
+  process.exit(1);
+}
+
 const state: GameState = {
-  seed: 20260911,
+  seed: seed.value,
   players: [
     { id: 'jugador-1', name: 'Ana', tokens: 0 },
     { id: 'jugador-2', name: 'Beto', tokens: 0 },

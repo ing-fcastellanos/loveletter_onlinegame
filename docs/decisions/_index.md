@@ -11,6 +11,7 @@
 | [0005](0005-motor-como-codigo-fuente-y-superficie-de-cliente.md) | El motor como paquete de código fuente, con superficie de cliente separada | Accepted | 2026-09-08 |
 | [0006](0006-linter-y-formateador-oxlint-prettier.md)             | Linter y formateador: oxlint + Prettier, sin ESLint                        | Accepted | 2026-09-09 |
 | [0007](0007-modelo-de-estado-dos-capas-y-turno.md)               | Modelo de estado: dos capas, carta única y turno como máquina de estados   | Accepted | 2026-09-11 |
+| [0008](0008-aleatoriedad-sfc32-semilla-por-ronda.md)             | Aleatoriedad: sfc32, semilla por partida y barajado derivado por ronda     | Accepted | 2026-09-14 |
 
 ## ADRs previstos (nacerán de fases del ROADMAP)
 

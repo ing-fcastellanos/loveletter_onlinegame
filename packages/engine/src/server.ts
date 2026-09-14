@@ -6,11 +6,13 @@
  * barril; no debe contener lógica.
  */
 
-export { CARD } from './cards.ts';
+export { CARD, DECK, DECK_COMPOSITION } from './cards.ts';
 export type { CardName, CardValue } from './cards.ts';
 export { ok, err } from './result.ts';
 export type { Result } from './result.ts';
 export type { RuleViolation } from './violation.ts';
+export { roundRandom, shuffle, shuffleRound, toSeed } from './random.ts';
+export type { InvalidSeed, Random, Seed } from './random.ts';
 export { handOf } from './state.ts';
 export type {
   PlayerId,

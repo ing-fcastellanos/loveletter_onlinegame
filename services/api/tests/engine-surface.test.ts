@@ -4,11 +4,16 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { handOf, project } from '@loveletter/engine/server';
+import { handOf, project, toSeed } from '@loveletter/engine/server';
 import type { GameState } from '@loveletter/engine/server';
 
+const seed = toSeed(7);
+if (!seed.ok) {
+  throw new Error('semilla de prueba inválida');
+}
+
 const state: GameState = {
-  seed: 7,
+  seed: seed.value,
   players: [
     { id: 'jugador-1', name: 'Ana', tokens: 0 },
     { id: 'jugador-2', name: 'Beto', tokens: 1 },

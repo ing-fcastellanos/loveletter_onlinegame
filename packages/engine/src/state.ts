@@ -12,6 +12,7 @@
  */
 
 import type { CardName } from './cards.ts';
+import type { Seed } from './random.ts';
 
 export type PlayerId = string;
 
@@ -82,8 +83,11 @@ export type Round = {
 
 /** Estado autoritativo: lo sabe todo. Nunca sale del servidor (ADR 0004). */
 export type GameState = {
-  /** Provisional: el issue #8 decide si el PRNG necesita un estado más rico. */
-  readonly seed: number;
+  /**
+   * Semilla de la partida (ADR 0008). El mazo de cada ronda se deriva de ella y del número de
+   * ronda, así que basta con ella: no hay estado de generador. Es información oculta.
+   */
+  readonly seed: Seed;
   /** Orden de asiento. */
   readonly players: readonly Player[];
   readonly round: Round;
