@@ -54,7 +54,54 @@
 
 ## 9. Verificación
 
-- [ ] 9.1 En un clon limpio: `npm install`, `npm run lint`, `npm run format:check`, `npm run typecheck` y `npm test` pasan; pegar la salida real.
-- [ ] 9.2 Mapear cada escenario de `specs/deck/spec.md` a su verificación y anotar la tabla.
-- [ ] 9.3 Confirmar que ninguna vista de jugador contiene la semilla y que ningún símbolo de semilla o barajado es alcanzable desde la superficie de cliente, citando las tareas 5.2 y 5.3.
-- [ ] 9.4 Cerrar registrando las desviaciones del plan y `openspec validate add-seeded-deck --strict` en verde.
+- [x] 9.1 En un clon limpio: `npm install`, `npm run lint`, `npm run format:check`, `npm run typecheck` y `npm test` pasan; pegar la salida real.
+- [x] 9.2 Mapear cada escenario de `specs/deck/spec.md` a su verificación y anotar la tabla.
+- [x] 9.3 Confirmar que ninguna vista de jugador contiene la semilla y que ningún símbolo de semilla o barajado es alcanzable desde la superficie de cliente, citando las tareas 5.2 y 5.3.
+- [x] 9.4 Cerrar registrando las desviaciones del plan y `openspec validate add-seeded-deck --strict` en verde.
+
+### Evidencia
+
+**9.1 — Clon limpio** (`git clone -b feat/seeded-deck`), sin pasos intermedios:
+
+```
+npm run lint          PASA
+npm run format:check  PASA
+npm run typecheck     PASA   # incluye los contratos de deck.types.ts y game-state.types.ts
+npm run test          PASA
+Test Files  4 passed (4)   Tests  30 passed (30)   # packages/engine
+Test Files  1 passed (1)   Tests  1 passed (1)   # apps/web
+Test Files  1 passed (1)   Tests  2 passed (2)   # services/api
+```
+
+**9.2 — Cada escenario de `specs/deck/spec.md` y su verificación** (valores medidos con el código final):
+
+| Requirement · Scenario                                     | Verificado por                                                                                         |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Composición · dieciséis cartas con la distribución clásica | `deck.test.ts` — `DECK` y `DECK_COMPOSITION` contra la composición clásica                             |
+| Composición · alcanzable desde la superficie de cliente    | `contract.test.ts` — importa `DECK` y `DECK_COMPOSITION` desde `@loveletter/engine`                    |
+| Semilla · un entero seguro no negativo es válido           | `deck.test.ts` — 0, 20260911 y `Number.MAX_SAFE_INTEGER`                                               |
+| Semilla · fuera de rango se rechaza como resultado         | `deck.test.ts` — -1, 1,5, `NaN`, `Infinity` y 2^53, sin lanzar                                         |
+| Semilla · un número sin validar no se acepta               | `deck.types.ts` — cuatro directivas; mutación 7.4                                                      |
+| Determinista · misma semilla y ronda, mismo mazo           | `deck.test.ts`                                                                                         |
+| Toda la semilla · por encima de 2^32                       | `deck.test.ts` — dos pares de semillas; mutaciones 7.1 (truncado y plegado por XOR)                    |
+| Cada ronda · no repiten mazo más que el azar               | 10 000 de 10 000 rondas distintas                                                                      |
+| Cada ronda · rondas consecutivas sin correlación           | carta superior repetida 0,1748; esperado 44/256 ≈ 0,1719; tolerancia 0,02                              |
+| Uniforme · posición de la Princesa                         | χ² = 5,95 sobre 16 000 semillas; crítico 37,70; mutación 7.2                                           |
+| Uniforme · la prueba detecta un barajado sesgado           | χ² = 348,1 con el barajado ingenuo; robusta al orden de `DECK` (mutación 7.3)                          |
+| Uniforme · coincidencias entre semillas                    | 10 000 de 10 000 semillas distintas; esperado ≈ 0,005 colisiones                                       |
+| Conserva · permutación del mazo completo                   | `deck.test.ts` — 1000 semillas                                                                         |
+| Congelado · semilla de referencia, mazo de referencia      | prueba dorada; mutaciones 7.2 y 7.3; confirmada por un sfc32 canónico escrito aparte (tarea 6.7)       |
+| Sorteo posterior · no altera el mazo                       | `deck.test.ts` — el mazo es la primera consumición y 100 sorteos posteriores no lo cambian             |
+| Oculta · inalcanzable desde la superficie de cliente       | `boundary.test.ts` — 12 nombres, incluidos `Seed`, `toSeed`, `roundRandom`, `shuffle` y `shuffleRound` |
+| Oculta · la vista de un jugador no contiene la semilla     | `contract.test.ts` — la vista proyectada con la semilla 987654321 no contiene esa cifra                |
+
+**9.3 —** Ningún símbolo de semilla o barajado es alcanzable desde la superficie de cliente (tarea 5.2: `TS2305`/`TS2724` por cada nombre) y la vista de un jugador no contiene la semilla (tarea 5.3). `PlayerView` sigue exponiendo solo `deckCount`.
+
+**9.4 — Desviaciones registradas:**
+
+- **6.7** — la prueba dorada no coincidió con el mazo del design. Causa: el esbozo de la exploración incrementaba el contador de sfc32 antes de sumarlo; el motor implementa el sfc32 canónico. Investigado con cuatro comprobaciones independientes y corregido en `design.md`.
+- **6.3** — segundo par de semillas, porque el original no detectaba un plegado por XOR (medido: sobrevivía).
+- **6.5** — la autoprueba de sesgo usa su propia entrada, porque con `DECK` solo discriminaba por el orden canónico (medido: χ² 13,8 con la Princesa al principio).
+- **3.2** — `uniformInt` se exporta desde `random.ts` para el #9, pero no desde ningún barril.
+
+`openspec validate add-seeded-deck --strict`: **valid**.
