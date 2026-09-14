@@ -60,14 +60,18 @@ Una segunda cuestión es el ciclo de vida: las fichas de afecto duran toda la pa
 | Un eliminado no tiene carta                                   | Sí                     | —                           |
 | Cero o tres cartas descubiertas                               | Sí                     | —                           |
 | Las fichas no viven en la ronda                               | Sí                     | —                           |
-| El jugador del turno es un activo de la ronda                 | No                     | #12 valida; #22 comprueba   |
-| Los ids de la ronda coinciden con los de la partida, en orden | No                     | #9 construye; #22 comprueba |
+| El jugador del turno es un activo de la ronda                 | No                     | #12 valida; #21 comprueba   |
+| Los ids de la ronda coinciden con los de la partida, en orden | No                     | #9 construye; #21 comprueba |
 | Identificadores únicos                                        | No                     | #9                          |
 | Tres descubiertas si y solo si hay dos jugadores              | No                     | #9                          |
-| Conservación de las 16 cartas, ninguna en dos lugares         | No                     | #8; #22                     |
+| Conservación de las 16 cartas, ninguna en dos lugares         | No                     | #8; #21                     |
 
 ## Re-evaluación
 
 - Si aparece un efecto que necesite que un jugador fuera de turno sostenga dos cartas, este modelo deja de servir tal cual. En la edición clásica no existe ninguno; la edición 2019 está fuera de alcance.
 - Si la indirección de la mano derivada estorba de forma recurrente en las reglas de la Fase 2, revisar si conviene exponer un accesor más rico antes que almacenar la mano.
-- Cuando lleguen los estados terminales (#20, #21), `Round` pasa a ser una unión por estado; si en cambio se le añaden campos opcionales sueltos, es señal de que este ADR se está erosionando.
+- Cuando lleguen los estados terminales (#19, #20), `Round` pasa a ser una unión por estado; si en cambio se le añaden campos opcionales sueltos, es señal de que este ADR se está erosionando.
+
+## Fe de erratas
+
+**2026-09-14** — Se corrigieron cuatro referencias a issues. La decisión no cambia. Los estados terminales son el issue #19 (fin de ronda) y el #20 (fin de partida), no el #20 y el #21; y la prueba de invariantes que figura como custodio en la tabla de consecuencias es el issue #21, no el #22, que es el spike de la técnica de render de la UI. Se detectó al preparar el issue #9.

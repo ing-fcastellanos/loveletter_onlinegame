@@ -50,3 +50,27 @@ export const DECK_COMPOSITION = {
 export const DECK: readonly CardName[] = (Object.keys(CARD) as CardName[]).flatMap((card) =>
   Array.from({ length: DECK_COMPOSITION[card] }, () => card),
 );
+
+/**
+ * El mazo completo como tupla de dieciséis cartas. Con este tipo, desestructurar el mazo de
+ * una ronda da cartas definidas bajo `noUncheckedIndexedAccess`, sin guardas ni aserciones en
+ * quien reparte (ADR 0009).
+ */
+export type FullDeck = readonly [
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+  CardName,
+];

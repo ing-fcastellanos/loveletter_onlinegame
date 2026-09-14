@@ -84,6 +84,18 @@ context: |
   - La semilla es información oculta: Seed, toSeed y todo lo que baraja solo en ./server.
     DECK y DECK_COMPOSITION son públicos y están también en la superficie de cliente.
 
+  Preparación de ronda (ADR 0009):
+  - Una ronda solo nace en setup.ts: startMatch(seed, seats) construye la partida y reparte la
+    ronda 1; dealRound(seed, number, players, first) reparte cualquier ronda. Ambas devuelven
+    Result<…, SetupViolation> (entrada del anfitrión, separada de RuleViolation).
+  - Se valida en el constructor, no en el tipo: 2 a 4 jugadores, ids únicos, número de ronda
+    entero entre 1 y 2^32 - 1, y quien empieza sentado.
+  - Orden canónico congelado: la primera carta del mazo de la ronda se aparta; a dos jugadores,
+    las tres siguientes se descubren; luego una carta por asiento en orden de asiento.
+  - Quien empieza la ronda 1 se sortea con el generador de la ronda, después del barajado; desde
+    la ronda 2 empieza el ganador de la anterior.
+  - shuffleRound devuelve deck: FullDeck (tupla de 16). El mazo se desestructura, nunca se indexa.
+
   Convenciones:
   - Lint con oxlint y formateo con Prettier; NO se instala ESLint (ADR 0006): el paquete
     typescript 7 ya no publica la API JS del compilador y typescript-eslint no puede operar.

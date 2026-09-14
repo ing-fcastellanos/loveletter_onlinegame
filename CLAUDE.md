@@ -54,6 +54,15 @@ Lo fija el [ADR 0007](docs/decisions/0007-modelo-de-estado-dos-capas-y-turno.md)
 
 Lo que el tipo **no** puede garantizar —que el jugador del turno sea un activo, la alineación de ids entre capas, la conservación de las 16 cartas— está en la tabla del ADR 0007 con su custodio. No lo des por hecho en una regla.
 
+### Preparación de ronda
+
+La fija el [ADR 0009](docs/decisions/0009-preparacion-de-ronda-reparto-y-sorteo.md):
+
+- **Una ronda solo nace en `setup.ts`.** `startMatch(seed, asientos)` construye la partida y reparte la ronda 1; `dealRound(seed, número, jugadores, quienEmpieza)` reparte cualquier ronda. Ambas validan y devuelven `Result<…, SetupViolation>`: de 2 a 4 jugadores, ids únicos, número de ronda entero entre 1 y 2^32 − 1, y quien empieza sentado.
+- **Orden canónico del reparto, congelado por una prueba dorada**: la primera carta del mazo de la ronda se aparta; a dos jugadores, las tres siguientes se descubren; luego una carta por asiento en orden de asiento. El reparto no depende de quién empieza.
+- **Quién empieza la ronda 1 se sortea con el generador de la ronda, después del barajado.** Desde la ronda 2 empieza el ganador de la anterior (#20).
+- **El mazo de la ronda es un `FullDeck`** (tupla de dieciséis): se desestructura, nunca se indexa.
+
 ## Stack — verdades del proyecto
 
 | Capa                      | Tecnología                                                                                                                                                                                  |
@@ -214,7 +223,7 @@ Decisiones no triviales → `docs/decisions/NNNN-titulo.md` usando [la plantilla
 
 ## Cosas que **no** existen todavía (no las inventes)
 
-- **No hay reglas de juego.** El modelo del estado ya existe ([ADR 0007](docs/decisions/0007-modelo-de-estado-dos-capas-y-turno.md)), pero ninguna operación lo transforma: no hay preparación de ronda (#9), ciclo de turno (#12) ni efectos (Fase 2). El mazo y su barajado sí existen ([ADR 0008](docs/decisions/0008-aleatoriedad-sfc32-semilla-por-ronda.md)), pero nada reparte todavía. `PlayerView`, `project` y `Command` siguen siendo marcadores de los issues #10 y #12.
+- **No hay reglas de juego.** El modelo del estado ya existe ([ADR 0007](docs/decisions/0007-modelo-de-estado-dos-capas-y-turno.md)), pero ninguna operación lo transforma: no hay ciclo de turno (#12) ni efectos (Fase 2). El mazo, su barajado y la preparación de ronda sí existen ([ADR 0008](docs/decisions/0008-aleatoriedad-sfc32-semilla-por-ronda.md), [ADR 0009](docs/decisions/0009-preparacion-de-ronda-reparto-y-sorteo.md)): una partida arranca repartida y con el turno en la fase de robar, pero nada la hace avanzar. `PlayerView`, `project` y `Command` siguen siendo marcadores de los issues #10 y #12.
 - No hay UI: `apps/web` es un punto de entrada que prueba el enlace con el motor. La interfaz real es la Fase 3.
 - No hay servidor, ni base de datos, ni persistencia: `services/api` es un esqueleto. Fastify, WebSocket y PostgreSQL son la Fase 4.
 - No hay bots, ranking, chat, cuentas ni arte propio — ver "Fuera de alcance" en [ROADMAP.md](ROADMAP.md).

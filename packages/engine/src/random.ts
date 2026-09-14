@@ -11,7 +11,7 @@
  */
 
 import { DECK } from './cards.ts';
-import type { CardName } from './cards.ts';
+import type { FullDeck } from './cards.ts';
 import { err, ok } from './result.ts';
 import type { Result } from './result.ts';
 
@@ -115,8 +115,11 @@ export function shuffle<T>(items: readonly T[], next: Random): readonly T[] {
 export function shuffleRound(
   seed: Seed,
   round: number,
-): { readonly deck: readonly CardName[]; readonly random: Random } {
+): { readonly deck: FullDeck; readonly random: Random } {
   const random = roundRandom(seed, round);
-  const deck = shuffle(DECK, random);
+  // Aserción sólida: el barajado conserva las cartas (requisito de la capability `deck`, ya
+  // probado), así que el mazo barajado tiene exactamente las dieciséis de DECK. El afinado deja
+  // repartir desestructurando, sin índices sin comprobar (ADR 0009). No cambia nada en runtime.
+  const deck = shuffle(DECK, random) as FullDeck;
   return { deck, random };
 }
