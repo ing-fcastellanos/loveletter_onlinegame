@@ -38,6 +38,12 @@ const AUTHORITY_ONLY = [
   'roundRandom',
   'shuffle',
   'shuffleRound',
+  // La preparación construye el estado autoritativo y la ronda, con toda su información oculta.
+  'startMatch',
+  'dealRound',
+  'Seat',
+  'SetupViolation',
+  'FullDeck',
 ] as const;
 
 describe('la superficie por defecto no expone estado oculto', () => {

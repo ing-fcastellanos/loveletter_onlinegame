@@ -64,7 +64,7 @@ export type Turn =
   | { readonly stage: 'play'; readonly player: PlayerId; readonly drawn: CardName };
 
 /**
- * Una ronda. Cuando lleguen los estados terminales (issues #20 y #21) pasará a ser una
+ * Una ronda. Cuando lleguen los estados terminales (issues #19 y #20) pasará a ser una
  * unión por estado —`playing` con turno, `over` con ganador— en vez de acumular campos
  * opcionales.
  */
