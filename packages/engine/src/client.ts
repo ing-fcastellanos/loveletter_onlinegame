@@ -14,5 +14,5 @@ export type { CardName, CardValue } from './cards.ts';
 export type { Result } from './result.ts';
 export type { RuleViolation } from './violation.ts';
 export type { PlayerId, Player, Hand } from './state.ts';
-export type { PlayerView } from './view.ts';
+export type { PlayerSeatView, PlayerView } from './view.ts';
 export type { Command } from './command.ts';

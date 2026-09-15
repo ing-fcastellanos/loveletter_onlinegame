@@ -16,7 +16,24 @@ import { testSeed } from './support/seed.ts';
 
 describe('la vista proyectada sí es alcanzable desde la superficie por defecto', () => {
   it('los tipos públicos son utilizables', () => {
-    const view: PlayerView = { deckCount: 10 };
+    const view: PlayerView = {
+      roundNumber: 1,
+      deckCount: 10,
+      faceUp: [],
+      players: [
+        {
+          self: true,
+          id: 'ana',
+          name: 'Ana',
+          tokens: 1,
+          status: 'active',
+          hand: ['Guard', 'Countess'],
+          discards: [],
+          protected: false,
+        },
+      ],
+      turn: { stage: 'draw', player: 'ana' },
+    };
     const player: Player = { id: 'ana', name: 'Ana', tokens: 1 };
     const hand: Hand = ['Guard', 'Countess'];
 
@@ -62,12 +79,25 @@ describe('la autoridad completa vive tras un subpath explícito', () => {
 
     expect(view.deckCount).toBe(2);
 
+    // Lo que Ana sí ve: su propia carta (Barón) y el turno sin la carta robada por Beto.
+    expect(view.players.find((seat) => seat.id === 'ana')).toMatchObject({
+      self: true,
+      hand: ['Baron'],
+    });
+    expect(view.turn).toEqual({ stage: 'play', player: 'beto' });
+
     // Lo que Ana no puede ver: el orden del mazo, la carta apartada, la carta de cada rival
-    // y la que Beto acaba de robar. Su propia carta (Barón) no se lista: el issue #10 se la
-    // mostrará.
+    // y la que Beto acaba de robar. No es una búsqueda de texto: un nombre de carta puede
+    // ser legítimamente visible en un campo y oculto en otro del mismo estado. Se comprueba
+    // por nombre de campo (ninguno de los prohibidos existe) y por el contenido exacto de
+    // los campos que sí pueden llevar una carta.
     const serialized = JSON.stringify(view);
-    for (const hidden of ['Guard', 'Priest', 'Princess', 'King', 'Handmaid', 'Countess']) {
-      expect(serialized, hidden).not.toContain(hidden);
+    for (const forbiddenField of ['setAside', 'deck', 'held', 'drawn']) {
+      expect(serialized, forbiddenField).not.toContain(`"${forbiddenField}"`);
+    }
+    for (const seat of view.players) {
+      const roundPlayer = state.round.players.find((candidate) => candidate.id === seat.id);
+      expect(seat.discards, seat.id).toEqual(roundPlayer?.discards);
     }
 
     // Y la semilla: con ella se calcula el mazo de cualquier ronda (ADR 0008).
