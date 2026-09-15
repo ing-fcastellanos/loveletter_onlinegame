@@ -29,6 +29,15 @@
 
 - [x] 5.1 Actualizar `CLAUDE.md` — sección "Cosas que no existen todavía": `PlayerView` y `project` dejan de listarse como marcadores de los issues #10 y #12; solo `Command` sigue siéndolo (de #12).
 
+## 6. Consumidor no anticipado
+
+- [x] 6.1 `services/api/tests/engine-surface.test.ts` también fija el literal `{ deckCount: 1 }` para `project(...)` y no compilaba con la forma nueva. El proposal decía "ningún otro paquete consume `PlayerView` todavía... el impacto fuera del motor es nulo" — la propia prueba de `services/api` sí lo consumía. Se corrigió con la forma completa esperada, detectado por la verificación en clon limpio (`npm test` en la raíz, no solo `--workspace packages/engine`).
+
 ## Verificación
 
-<!-- Completar al implementar: salida de npm test, npm run typecheck, npm run lint y npm run format:check en un clon limpio. -->
+Clon limpio (`git clone --branch feat/player-view` + `npm install`):
+
+- `npm run typecheck` (los tres workspaces): PASS.
+- `npm test` (raíz, los tres workspaces): PASS — engine 6 archivos/65 pruebas, web 1, api 2.
+- `npm run lint`: PASS.
+- `npm run format:check`: PASS.
