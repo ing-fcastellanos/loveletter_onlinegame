@@ -9,6 +9,7 @@
  */
 
 import type { CardName } from './cards.ts';
+import type { GameEvent } from './event.ts';
 import { handOf } from './state.ts';
 import type { GameState, Hand, Player, PlayerId, Round, RoundPlayer } from './state.ts';
 
@@ -58,7 +59,13 @@ export type PlayerView = {
   readonly players: readonly PlayerSeatView[];
   /** Nunca lleva la carta robada: si es mi turno, ya está en mi propio `hand`. */
   readonly turn: { readonly stage: 'draw' | 'play'; readonly player: PlayerId };
+  /** Público, o restringido a este jugador — nunca un evento fuera de su audiencia. */
+  readonly log: readonly GameEvent[];
 };
+
+function isVisible(event: GameEvent, viewerId: PlayerId): boolean {
+  return event.audience === 'public' || event.audience.includes(viewerId);
+}
 
 function findPlayer(state: GameState, id: PlayerId): Player {
   const player = state.players.find((candidate) => candidate.id === id);
@@ -128,5 +135,6 @@ export function project(state: GameState, playerId: PlayerId): PlayerView {
     faceUp: round.faceUp,
     players: round.players.map((roundPlayer) => seatView(state, roundPlayer, playerId)),
     turn: { stage: round.turn.stage, player: round.turn.player },
+    log: state.log.filter((event) => isVisible(event, playerId)),
   };
 }

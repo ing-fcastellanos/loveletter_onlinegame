@@ -29,6 +29,7 @@ const state: GameState = {
     ],
     turn: { stage: 'play', player: 'jugador-1', drawn: 'Countess' },
   },
+  log: [{ type: 'RoundStarted', round: 2, first: 'jugador-1', audience: 'public' }],
 };
 
 describe('services/api habla con la superficie de autoridad', () => {
@@ -60,6 +61,7 @@ describe('services/api habla con la superficie de autoridad', () => {
         },
       ],
       turn: { stage: 'play', player: 'jugador-1' },
+      log: [{ type: 'RoundStarted', round: 2, first: 'jugador-1', audience: 'public' }],
     });
   });
 

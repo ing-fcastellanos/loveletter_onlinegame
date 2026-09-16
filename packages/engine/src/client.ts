@@ -16,3 +16,4 @@ export type { RuleViolation } from './violation.ts';
 export type { PlayerId, Player, Hand } from './state.ts';
 export type { PlayerSeatView, PlayerView } from './view.ts';
 export type { Command } from './command.ts';
+export type { Audience, GameEvent } from './event.ts';

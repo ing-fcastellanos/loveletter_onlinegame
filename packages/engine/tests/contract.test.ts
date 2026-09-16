@@ -33,6 +33,7 @@ describe('la vista proyectada sí es alcanzable desde la superficie por defecto'
         },
       ],
       turn: { stage: 'draw', player: 'ana' },
+      log: [{ type: 'TurnChanged', player: 'ana', audience: 'public' }],
     };
     const player: Player = { id: 'ana', name: 'Ana', tokens: 1 };
     const hand: Hand = ['Guard', 'Countess'];
@@ -73,11 +74,20 @@ describe('la autoridad completa vive tras un subpath explícito', () => {
         ],
         turn: { stage: 'play', player: 'beto', drawn: 'Countess' },
       },
+      log: [
+        { type: 'RoundStarted', round: 1, first: 'ana', audience: 'public' },
+        { type: 'CardDrawn', player: 'beto', card: 'Countess', audience: ['beto'] },
+      ],
     };
 
     const view = project(state, 'ana');
 
     expect(view.deckCount).toBe(2);
+
+    // El registro de eventos también se filtra: el robo de Beto es solo para él.
+    expect(view.log).toEqual([
+      { type: 'RoundStarted', round: 1, first: 'ana', audience: 'public' },
+    ]);
 
     // Lo que Ana sí ve: su propia carta (Barón) y el turno sin la carta robada por Beto.
     expect(view.players.find((seat) => seat.id === 'ana')).toMatchObject({

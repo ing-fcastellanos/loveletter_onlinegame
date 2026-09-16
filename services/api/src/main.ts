@@ -35,6 +35,7 @@ const state: GameState = {
     ],
     turn: { stage: 'draw', player: 'jugador-1' },
   },
+  log: [{ type: 'RoundStarted', round: 1, first: 'jugador-1', audience: 'public' }],
 };
 
 const view = project(state, 'jugador-1');
