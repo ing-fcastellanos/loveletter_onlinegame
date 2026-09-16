@@ -12,6 +12,7 @@
  */
 
 import type { CardName } from './cards.ts';
+import type { GameEvent } from './event.ts';
 import type { Seed } from './random.ts';
 
 export type PlayerId = string;
@@ -91,6 +92,8 @@ export type GameState = {
   /** Orden de asiento. */
   readonly players: readonly Player[];
   readonly round: Round;
+  /** Crece con la partida entera; no se reinicia al empezar una ronda nueva. */
+  readonly log: readonly GameEvent[];
 };
 
 /**

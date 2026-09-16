@@ -13,6 +13,7 @@
  */
 
 import type { CardName } from './cards.ts';
+import type { GameEvent } from './event.ts';
 import { shuffleRound, uniformInt } from './random.ts';
 import type { Seed } from './random.ts';
 import { err, ok } from './result.ts';
@@ -154,5 +155,6 @@ export function startMatch(seed: Seed, seats: readonly Seat[]): Result<GameState
   if (!round.ok) {
     return round;
   }
-  return ok({ seed, players, round: round.value });
+  const roundStarted: GameEvent = { type: 'RoundStarted', round: 1, first, audience: 'public' };
+  return ok({ seed, players, round: round.value, log: [roundStarted] });
 }

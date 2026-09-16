@@ -13,6 +13,7 @@ import type {
   ActivePlayer,
   CardName,
   EliminatedPlayer,
+  GameEvent,
   GameState,
   Player,
   PlayerId,
@@ -45,8 +46,13 @@ function eliminated(id: PlayerId, discards: readonly CardName[] = []): Eliminate
   return { status: 'eliminated', id, discards };
 }
 
-function game(players: readonly Player[], round: Round, seedValue = 1): GameState {
-  return { seed: testSeed(seedValue), players, round };
+function game(
+  players: readonly Player[],
+  round: Round,
+  log: readonly GameEvent[] = [],
+  seedValue = 1,
+): GameState {
+  return { seed: testSeed(seedValue), players, round, log };
 }
 
 function seatFor(view: PlayerView, id: PlayerId): PlayerSeatView {
@@ -294,6 +300,107 @@ describe('el orden de los asientos es el de la partida', () => {
         viewer,
       ).toEqual(order);
     }
+  });
+});
+
+const MINIMAL_ROUND: Round = {
+  number: 1,
+  deck: [],
+  setAside: 'Princess',
+  faceUp: [],
+  players: [active('ana', 'Guard'), active('beto', 'Priest')],
+  turn: { stage: 'draw', player: 'ana' },
+};
+
+describe('todo evento declara su audiencia', () => {
+  it('un evento público es visible para cualquiera', () => {
+    const publicEvent: GameEvent = { type: 'TurnChanged', player: 'beto', audience: 'public' };
+    const state = game([ANA, BETO], MINIMAL_ROUND, [publicEvent]);
+
+    expect(project(state, 'ana').log).toEqual([publicEvent]);
+    expect(project(state, 'beto').log).toEqual([publicEvent]);
+  });
+
+  it('un evento restringido solo es visible para su lista de jugadores', () => {
+    const CARO = player('caro', 'Caro');
+    const round: Round = {
+      ...MINIMAL_ROUND,
+      players: [active('ana', 'Guard'), active('beto', 'Priest'), active('caro', 'Baron')],
+    };
+    const restricted: GameEvent = {
+      type: 'CardDrawn',
+      player: 'ana',
+      card: 'Guard',
+      audience: ['ana', 'beto'],
+    };
+    const state = game([ANA, BETO, CARO], round, [restricted]);
+
+    expect(project(state, 'ana').log).toEqual([restricted]);
+    expect(project(state, 'beto').log).toEqual([restricted]);
+    expect(project(state, 'caro').log).toEqual([]);
+  });
+});
+
+describe('robar una carta es un evento restringido a quien la robó', () => {
+  it('el evento identifica la carta, y su audiencia es únicamente quien robó', () => {
+    const drawn: GameEvent = {
+      type: 'CardDrawn',
+      player: 'ana',
+      card: 'Priest',
+      audience: ['ana'],
+    };
+    const state = game([ANA, BETO], MINIMAL_ROUND, [drawn]);
+
+    expect(project(state, 'ana').log).toEqual([drawn]);
+    expect(project(state, 'beto').log).toEqual([]);
+  });
+});
+
+describe('descartar una carta y cambiar de turno son eventos públicos', () => {
+  it('ambos son visibles para cualquier jugador', () => {
+    const discarded: GameEvent = {
+      type: 'CardDiscarded',
+      player: 'ana',
+      card: 'Guard',
+      audience: 'public',
+    };
+    const turnChanged: GameEvent = { type: 'TurnChanged', player: 'beto', audience: 'public' };
+    const state = game([ANA, BETO], MINIMAL_ROUND, [discarded, turnChanged]);
+
+    expect(project(state, 'ana').log).toEqual([discarded, turnChanged]);
+    expect(project(state, 'beto').log).toEqual([discarded, turnChanged]);
+  });
+});
+
+describe('el inicio de una ronda es un evento público', () => {
+  it('identifica el número de ronda y quién la empieza, visible para cualquiera', () => {
+    const started: GameEvent = { type: 'RoundStarted', round: 1, first: 'ana', audience: 'public' };
+    const state = game([ANA, BETO], MINIMAL_ROUND, [started]);
+
+    expect(project(state, 'ana').log).toEqual([started]);
+    expect(project(state, 'beto').log).toEqual([started]);
+  });
+});
+
+describe('la vista incluye el registro de eventos que el jugador puede ver', () => {
+  it('un evento restringido no aparece para quien queda fuera de su audiencia, ni siquiera como entrada anónima', () => {
+    const CARO = player('caro', 'Caro');
+    const round: Round = {
+      ...MINIMAL_ROUND,
+      players: [active('ana', 'Guard'), active('beto', 'Priest'), active('caro', 'Baron')],
+    };
+    const restricted: GameEvent = {
+      type: 'CardDrawn',
+      player: 'ana',
+      card: 'Guard',
+      audience: ['ana', 'beto'],
+    };
+    const state = game([ANA, BETO, CARO], round, [restricted]);
+
+    const caroView = project(state, 'caro');
+
+    expect(caroView.log).toEqual([]);
+    expect(JSON.stringify(caroView)).not.toContain('CardDrawn');
   });
 });
 

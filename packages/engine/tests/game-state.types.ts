@@ -53,6 +53,7 @@ export const partidaADos: GameState = {
     ],
     turn: { stage: 'play', player: 'ana', drawn: 'Countess' },
   },
+  log: [],
 };
 
 /** Ronda a tres: sin descubiertas y con un eliminado que conserva sus descartes. */

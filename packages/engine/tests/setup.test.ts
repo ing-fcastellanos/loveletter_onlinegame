@@ -148,6 +148,18 @@ describe('una partida nueva empieza desde cero', () => {
   });
 });
 
+describe('iniciar una partida registra el evento de que la ronda empezó', () => {
+  it('el registro incluye el evento de que empezó la ronda uno, con quien la empieza', () => {
+    for (const count of [2, 3, 4]) {
+      const game = started(SEED, seatsFor(count));
+
+      expect(game.log).toEqual([
+        { type: 'RoundStarted', round: 1, first: game.round.turn.player, audience: 'public' },
+      ]);
+    }
+  });
+});
+
 describe('una carta se aparta siempre y tres se descubren solo en la partida a dos', () => {
   it('la carta apartada es la primera del mazo de la ronda', () => {
     const deck = shuffleRound(testSeed(SEED), 1).deck;
