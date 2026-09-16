@@ -28,5 +28,5 @@ export type {
   GameState,
 } from './state.ts';
 export { project } from './view.ts';
-export type { PlayerView } from './view.ts';
+export type { PlayerSeatView, PlayerView } from './view.ts';
 export type { Command } from './command.ts';

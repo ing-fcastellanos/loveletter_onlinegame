@@ -33,7 +33,34 @@ const state: GameState = {
 
 describe('services/api habla con la superficie de autoridad', () => {
   it('proyecta el estado autoritativo a la vista de un jugador', () => {
-    expect(project(state, 'jugador-1')).toEqual({ deckCount: 1 });
+    expect(project(state, 'jugador-1')).toEqual({
+      roundNumber: 2,
+      deckCount: 1,
+      faceUp: ['Guard', 'Priest', 'Baron'],
+      players: [
+        {
+          self: true,
+          id: 'jugador-1',
+          name: 'Ana',
+          tokens: 0,
+          status: 'active',
+          hand: ['Handmaid', 'Countess'],
+          discards: [],
+          protected: false,
+        },
+        {
+          self: false,
+          id: 'jugador-2',
+          name: 'Beto',
+          tokens: 1,
+          status: 'active',
+          hasCard: true,
+          discards: [],
+          protected: false,
+        },
+      ],
+      turn: { stage: 'play', player: 'jugador-1' },
+    });
   });
 
   it('lee la mano derivada del jugador en turno', () => {
