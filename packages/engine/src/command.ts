@@ -1,13 +1,18 @@
 /**
- * Intención de un jugador y su resolución: robar, o descartar una de sus dos cartas — sin
- * resolver ningún efecto de carta todavía (issue #12).
+ * Intención de un jugador y su resolución: robar, o descartar una de sus dos cartas
+ * resolviendo el efecto correspondiente (issues #12, #13).
  *
  * `applyCommand` valida en orden "quién → cuándo → qué": primero que sea el jugador del
  * turno, luego que la fase admita el comando, y solo entonces lo específico de cada uno
- * (mazo con cartas para robar; la carta pedida, en mano, para descartar).
+ * (mazo con cartas para robar; la carta pedida, en mano, para descartar). Descartar aplica
+ * el descarte y después resuelve el efecto de la carta (`EFFECTS`, issue #13) antes de
+ * avanzar el turno: ningún efecto real está implementado todavía, así que el resultado
+ * observable sigue siendo el mismo que en #12.
  */
 
 import type { CardName } from './cards.ts';
+import { EFFECTS } from './effect.ts';
+import type { EffectParams } from './effect.ts';
 import type { GameEvent } from './event.ts';
 import { err, ok } from './result.ts';
 import type { Result } from './result.ts';
@@ -16,7 +21,13 @@ import type { RuleViolation } from './violation.ts';
 
 export type Command =
   | { readonly type: 'Draw'; readonly playerId: PlayerId }
-  | { readonly type: 'Discard'; readonly playerId: PlayerId; readonly card: CardName };
+  | {
+      readonly type: 'Discard';
+      readonly playerId: PlayerId;
+      readonly card: CardName;
+      readonly target?: PlayerId;
+      readonly guess?: CardName;
+    };
 
 type Applied = { readonly state: GameState; readonly events: readonly GameEvent[] };
 
@@ -73,6 +84,7 @@ function applyDiscard(
   state: GameState,
   player: PlayerId,
   card: CardName,
+  params: EffectParams,
 ): Result<Applied, RuleViolation> {
   const { round } = state;
   const { turn } = round;
@@ -98,15 +110,32 @@ function applyDiscard(
   const players = round.players.map((candidate) =>
     candidate.id === player ? discarded : candidate,
   );
-  const next = nextActivePlayer(round, player);
-  const newRound: Round = { ...round, players, turn: { stage: 'draw', player: next } };
-
   const cardDiscarded: GameEvent = { type: 'CardDiscarded', player, card, audience: 'public' };
+  const discardedState: GameState = {
+    ...state,
+    round: { ...round, players },
+    log: [...state.log, cardDiscarded],
+  };
+
+  const resolved = EFFECTS[card](discardedState, player, params);
+  if (!resolved.ok) {
+    return resolved;
+  }
+
+  const next = nextActivePlayer(resolved.value.state.round, player);
+  const newRound: Round = {
+    ...resolved.value.state.round,
+    turn: { stage: 'draw', player: next },
+  };
   const turnChanged: GameEvent = { type: 'TurnChanged', player: next, audience: 'public' };
 
   return ok({
-    state: { ...state, round: newRound, log: [...state.log, cardDiscarded, turnChanged] },
-    events: [cardDiscarded, turnChanged],
+    state: {
+      ...resolved.value.state,
+      round: newRound,
+      log: [...resolved.value.state.log, turnChanged],
+    },
+    events: [cardDiscarded, ...resolved.value.events, turnChanged],
   });
 }
 
@@ -123,5 +152,5 @@ export function applyCommand(state: GameState, cmd: Command): Result<Applied, Ru
   if (cmd.type === 'Draw') {
     return applyDraw(state, cmd.playerId);
   }
-  return applyDiscard(state, cmd.playerId, cmd.card);
+  return applyDiscard(state, cmd.playerId, cmd.card, cmd);
 }

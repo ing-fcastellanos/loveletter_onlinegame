@@ -1,14 +1,17 @@
 /**
- * Ciclo de turno: robar, descartar, avanzar (capability `turn-cycle`, issue #12).
+ * Ciclo de turno: robar, descartar, avanzar (capability `turn-cycle`, issue #12), resolviendo
+ * el efecto de la carta entre el descarte y el avance de turno (capability `effect-dispatch`,
+ * issue #13).
  *
- * Ningún efecto de carta se resuelve todavía: descartar cualquier carta, incluida la
- * Princesa, es un descarte más. Los estados de prueba se arman a mano para controlar
- * exactamente la fase del turno y quién está eliminado, igual que en #10/#11.
+ * Ningún efecto real está implementado todavía: descartar cualquier carta, incluida la
+ * Princesa, sigue sin eliminar a nadie — las ocho entradas de la tabla de despacho son el
+ * mismo `noEffect`. Los estados de prueba se arman a mano para controlar exactamente la fase
+ * del turno y quién está eliminado, igual que en #10/#11.
  */
 
 import { describe, expect, it } from 'vitest';
 
-import { applyCommand, startMatch } from '@loveletter/engine/server';
+import { applyCommand, CARD, startMatch } from '@loveletter/engine/server';
 import type {
   ActivePlayer,
   CardName,
@@ -306,5 +309,61 @@ describe('una ronda se juega por turnos hasta vaciar el mazo', () => {
 
     expect(state.round.deck).toHaveLength(0);
     expect(turns).toBeGreaterThan(0);
+  });
+});
+
+describe('cada personaje tiene una entrada de efecto declarada', () => {
+  it('descartar cualquiera de los ocho personajes no cambia el estado más allá del descarte', () => {
+    for (const card of Object.keys(CARD) as CardName[]) {
+      const other: CardName = card === 'Guard' ? 'Priest' : 'Guard';
+      const round: Round = {
+        number: 1,
+        deck: [],
+        setAside: 'Princess',
+        faceUp: [],
+        players: [active('ana', other), active('beto', 'Baron')],
+        turn: { stage: 'play', player: 'ana', drawn: card },
+      };
+      const state = game([ANA, BETO], round);
+
+      const { state: next, events } = applied(state, { type: 'Discard', playerId: 'ana', card });
+
+      expect(events, card).toEqual([
+        { type: 'CardDiscarded', player: 'ana', card, audience: 'public' },
+        { type: 'TurnChanged', player: 'beto', audience: 'public' },
+      ]);
+      expect(
+        next.round.players.find((candidate) => candidate.id === 'ana'),
+        card,
+      ).toMatchObject({ held: other, discards: [card] });
+    }
+  });
+});
+
+describe('descartar acepta los parámetros del efecto de la carta', () => {
+  it('descartar sin objetivo ni carta adivinada sigue siendo válido', () => {
+    const state = game([ANA, BETO], PLAY_ROUND);
+
+    const { events } = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+
+    expect(events).toEqual([
+      { type: 'CardDiscarded', player: 'ana', card: 'King', audience: 'public' },
+      { type: 'TurnChanged', player: 'beto', audience: 'public' },
+    ]);
+  });
+
+  it('con objetivo y carta adivinada, el resultado es el mismo que sin ellos', () => {
+    const state = game([ANA, BETO], PLAY_ROUND);
+
+    const withoutParams = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+    const withParams = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'King',
+      target: 'beto',
+      guess: 'Guard',
+    });
+
+    expect(withParams).toEqual(withoutParams);
   });
 });
