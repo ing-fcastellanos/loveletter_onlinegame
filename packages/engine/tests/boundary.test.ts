@@ -44,6 +44,8 @@ const AUTHORITY_ONLY = [
   'Seat',
   'SetupViolation',
   'FullDeck',
+  // Transforma el estado autoritativo completo; la superficie segura solo conoce Command.
+  'applyCommand',
 ] as const;
 
 describe('la superficie por defecto no expone estado oculto', () => {
