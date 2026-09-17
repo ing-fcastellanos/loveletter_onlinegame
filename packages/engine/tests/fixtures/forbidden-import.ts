@@ -17,6 +17,7 @@ import type {
   Turn,
 } from '@loveletter/engine';
 import {
+  applyCommand,
   dealRound,
   handOf,
   roundRandom,
@@ -38,4 +39,13 @@ export const leak:
   | SetupViolation
   | Turn
   | undefined = undefined;
-export const leakAccessors = [dealRound, handOf, roundRandom, shuffle, shuffleRound, startMatch, toSeed];
+export const leakAccessors = [
+  applyCommand,
+  dealRound,
+  handOf,
+  roundRandom,
+  shuffle,
+  shuffleRound,
+  startMatch,
+  toSeed,
+];
