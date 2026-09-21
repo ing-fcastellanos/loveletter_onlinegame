@@ -111,3 +111,24 @@ export function handOf(round: Round, playerId: PlayerId): Hand | null {
   }
   return [player.held];
 }
+
+/**
+ * Elimina a un jugador activo: la carta que sostenía se suma a sus descartes, públicos desde
+ * ese momento (issue #14). Es el único camino de eliminación del motor — el Barón, el
+ * Príncipe y la Princesa (issues #15–#17) lo reutilizan en vez de duplicarlo.
+ */
+export function eliminate(player: ActivePlayer): EliminatedPlayer {
+  return { status: 'eliminated', id: player.id, discards: [...player.discards, player.held] };
+}
+
+/**
+ * Un jugador activo por id. Que exista y esté activo es una invariante de quien llama, no
+ * una jugada ilegal de un cliente: si se rompe, es un bug del motor (ADR 0007).
+ */
+export function requireActive(round: Round, id: PlayerId): ActivePlayer {
+  const player = round.players.find((candidate) => candidate.id === id);
+  if (player === undefined || player.status !== 'active') {
+    throw new Error(`Jugador '${id}' no es un activo de la ronda.`);
+  }
+  return player;
+}
