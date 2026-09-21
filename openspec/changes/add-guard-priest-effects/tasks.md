@@ -32,4 +32,9 @@
 
 ## Verificación
 
-<!-- Completar al implementar: salida de npm test, npm run typecheck, npm run lint y npm run format:check en un clon limpio. -->
+Clon limpio (`git clone --branch feat/guard-priest-effects` + `npm install`):
+
+- `npm run typecheck` (los tres workspaces): PASS.
+- `npm test` (raíz, los tres workspaces): PASS — engine 8 archivos/104 pruebas, web 1, api 2.
+- `npm run lint`: PASS.
+- `npm run format:check`: PASS.
