@@ -16,6 +16,7 @@ import type { EffectParams } from './effect.ts';
 import type { GameEvent } from './event.ts';
 import { err, ok } from './result.ts';
 import type { Result } from './result.ts';
+import { requireActive } from './state.ts';
 import type { ActivePlayer, GameState, PlayerId, Round } from './state.ts';
 import type { RuleViolation } from './violation.ts';
 
@@ -30,19 +31,6 @@ export type Command =
     };
 
 type Applied = { readonly state: GameState; readonly events: readonly GameEvent[] };
-
-/**
- * El jugador del turno, activo. Que lo sea es una invariante que este módulo mantiene por
- * construcción (`nextActivePlayer` nunca elige a un eliminado): si se rompiera, sería un bug
- * de orquestación, no una jugada ilegal de un cliente (ADR 0007).
- */
-function activeTurnPlayer(round: Round, playerId: PlayerId): ActivePlayer {
-  const player = round.players.find((candidate) => candidate.id === playerId);
-  if (player === undefined || player.status !== 'active') {
-    throw new Error(`El jugador del turno '${playerId}' no es un activo de la ronda.`);
-  }
-  return player;
-}
 
 /** Recorrido circular en orden de asiento desde `fromId`: el primer jugador activo. */
 function nextActivePlayer(round: Round, fromId: PlayerId): PlayerId {
@@ -92,7 +80,7 @@ function applyDiscard(
     return err({ code: 'MustDrawFirst', player });
   }
 
-  const current = activeTurnPlayer(round, player);
+  const current = requireActive(round, player);
   let remaining: CardName;
   if (card === current.held) {
     remaining = turn.drawn;

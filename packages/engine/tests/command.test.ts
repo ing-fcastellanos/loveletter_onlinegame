@@ -3,10 +3,10 @@
  * el efecto de la carta entre el descarte y el avance de turno (capability `effect-dispatch`,
  * issue #13).
  *
- * Ningún efecto real está implementado todavía: descartar cualquier carta, incluida la
- * Princesa, sigue sin eliminar a nadie — las ocho entradas de la tabla de despacho son el
- * mismo `noEffect`. Los estados de prueba se arman a mano para controlar exactamente la fase
- * del turno y quién está eliminado, igual que en #10/#11.
+ * El Guardia y el Sacerdote ya tienen efecto real (issue #14, ver `effect.test.ts`); el resto
+ * sigue sin implementar — descartarlas es un descarte más, sin cambiar nada adicional. Los
+ * estados de prueba se arman a mano para controlar exactamente la fase del turno y quién está
+ * eliminado, igual que en #10/#11.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -294,11 +294,28 @@ describe('una ronda se juega por turnos hasta vaciar el mazo', () => {
         throw new Error(`${currentPlayer} no está activo tras robar`);
       }
 
-      const discarded = applyCommand(state, {
-        type: 'Discard',
-        playerId: currentPlayer,
-        card: activePlayer.held,
-      });
+      // El Guardia y el Sacerdote (issue #14) exigen un objetivo. Con dos jugadores el rival
+      // siempre es el único objetivo legal (nadie protege todavía, la Sirvienta es #15). Para
+      // el Guardia, se adivina a propósito una carta que el rival no tiene: esta prueba solo
+      // verifica que una ronda se puede jugar de punta a punta, no el resultado de adivinar.
+      const opponent = state.round.players.find(
+        (candidate): candidate is ActivePlayer =>
+          candidate.id !== currentPlayer && candidate.status === 'active',
+      );
+      const command: Command =
+        activePlayer.held === 'Guard' && opponent !== undefined
+          ? {
+              type: 'Discard',
+              playerId: currentPlayer,
+              card: 'Guard',
+              target: opponent.id,
+              guess: opponent.held === 'Priest' ? 'Baron' : 'Priest',
+            }
+          : activePlayer.held === 'Priest' && opponent !== undefined
+            ? { type: 'Discard', playerId: currentPlayer, card: 'Priest', target: opponent.id }
+            : { type: 'Discard', playerId: currentPlayer, card: activePlayer.held };
+
+      const discarded = applyCommand(state, command);
       if (!discarded.ok) {
         throw new Error(
           `Discard rechazado en el turno de ${currentPlayer}: ${discarded.error.code}`,
@@ -312,10 +329,15 @@ describe('una ronda se juega por turnos hasta vaciar el mazo', () => {
   });
 });
 
-describe('cada personaje tiene una entrada de efecto declarada', () => {
-  it('descartar cualquiera de los ocho personajes no cambia el estado más allá del descarte', () => {
-    for (const card of Object.keys(CARD) as CardName[]) {
-      const other: CardName = card === 'Guard' ? 'Priest' : 'Guard';
+describe('cada personaje sin efecto implementado se descarta sin cambios adicionales', () => {
+  it('descartar cualquiera de las cartas sin efecto todavía no cambia el estado más allá del descarte', () => {
+    // El Guardia y el Sacerdote ya tienen efecto real (issue #14): su cobertura vive en
+    // effect.test.ts, no aquí — descartarlos exige un objetivo, así que ya no son "sin efecto".
+    const withoutEffect = (Object.keys(CARD) as CardName[]).filter(
+      (card) => card !== 'Guard' && card !== 'Priest',
+    );
+    for (const card of withoutEffect) {
+      const other: CardName = 'Guard';
       const round: Round = {
         number: 1,
         deck: [],
