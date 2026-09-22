@@ -1,5 +1,6 @@
 /**
- * Efectos de carta (capability `card-effects`, issue #14: Guardia y Sacerdote).
+ * Efectos de carta (capability `card-effects`): Guardia y Sacerdote (issue #14), Barón y
+ * Sirvienta (issue #15).
  *
  * La primera eliminación de todo el motor y la primera vez que un evento con audiencia
  * restringida tiene un productor real. Los estados de prueba se arman a mano para controlar
@@ -88,6 +89,28 @@ function playingPriest(players: readonly ActivePlayer[]): Round {
   };
 }
 
+function playingBaron(players: readonly ActivePlayer[]): Round {
+  return {
+    number: 1,
+    deck: [],
+    setAside: 'Princess',
+    faceUp: [],
+    players,
+    turn: { stage: 'play', player: 'ana', drawn: 'Baron' },
+  };
+}
+
+function playingHandmaid(players: readonly ActivePlayer[]): Round {
+  return {
+    number: 1,
+    deck: [],
+    setAside: 'Princess',
+    faceUp: [],
+    players,
+    turn: { stage: 'play', player: 'ana', drawn: 'Handmaid' },
+  };
+}
+
 describe('Guardia y Sacerdote exigen un objetivo activo, no protegido y distinto de quien juega', () => {
   it('un objetivo protegido es ilegal si hay otro disponible', () => {
     const round = playingGuard([
@@ -146,8 +169,10 @@ describe('Guardia y Sacerdote se descartan sin efecto si no hay ningún objetivo
       { type: 'CardDiscarded', player: 'ana', card: 'Guard', audience: 'public' },
       { type: 'TurnChanged', player: 'beto', audience: 'public' },
     ]);
+    // El turno pasa a beto: su propia protección expira al empezar SU turno (issue #15),
+    // un efecto del avance de turno, no del fizzle del Guardia en sí.
     expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
-      active('beto', 'Baron', { protected: true }),
+      active('beto', 'Baron', { protected: false }),
     );
   });
 });
@@ -304,5 +329,215 @@ describe('el Sacerdote revela la mano del objetivo solo a quien lo jugó', () =>
     expect(caroLog.some((event) => event.type === 'PriestPeeked')).toBe(false);
     expect(JSON.stringify(betoLog)).not.toContain('PriestPeeked');
     expect(JSON.stringify(caroLog)).not.toContain('PriestPeeked');
+  });
+});
+
+describe('el Barón exige un objetivo activo, no protegido y distinto de quien juega', () => {
+  it('un objetivo protegido es ilegal si hay otro disponible', () => {
+    const round = playingBaron([
+      active('ana', 'Priest'),
+      active('beto', 'King', { protected: true }),
+      active('caro', 'Handmaid'),
+    ]);
+    const state = game([ANA, BETO, CARO], round);
+
+    expect(
+      rejected(state, { type: 'Discard', playerId: 'ana', card: 'Baron', target: 'beto' }),
+    ).toEqual({ code: 'IllegalTarget', player: 'ana', target: 'beto' });
+  });
+
+  it('apuntarse a uno mismo es ilegal si hay otro objetivo disponible', () => {
+    const round = playingBaron([active('ana', 'Priest'), active('beto', 'King')]);
+    const state = game([ANA, BETO], round);
+
+    expect(
+      rejected(state, { type: 'Discard', playerId: 'ana', card: 'Baron', target: 'ana' }),
+    ).toEqual({ code: 'IllegalTarget', player: 'ana', target: 'ana' });
+  });
+});
+
+describe('el Barón se descarta sin efecto si no hay ningún objetivo legal', () => {
+  it('sin objetivo legal, el descarte no cambia nada más', () => {
+    const round = playingBaron([
+      active('ana', 'Priest'),
+      active('beto', 'King', { protected: true }),
+    ]);
+    const state = game([ANA, BETO], round);
+
+    const { state: next, events } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Baron',
+    });
+
+    expect(events).toEqual([
+      { type: 'CardDiscarded', player: 'ana', card: 'Baron', audience: 'public' },
+      { type: 'TurnChanged', player: 'beto', audience: 'public' },
+    ]);
+    // El turno pasa a beto: su protección expira al empezar SU turno (issue #15), no por el
+    // fizzle del Barón en sí.
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
+      active('beto', 'King', { protected: false }),
+    );
+  });
+});
+
+describe('el Barón elimina al de menor valor; un empate no elimina a nadie', () => {
+  it('quien juega con la carta más baja queda eliminado', () => {
+    const round = playingBaron([
+      active('ana', 'Guard', { discards: ['Priest'] }),
+      active('beto', 'King'),
+    ]);
+    const state = game([ANA, BETO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Baron',
+      target: 'beto',
+    });
+
+    // El descarte del propio Barón ya quedó en `discards` antes de resolver el efecto
+    // (issue #13): la eliminación agrega la carta que le quedaba encima de eso.
+    expect(next.round.players.find((candidate) => candidate.id === 'ana')).toEqual({
+      status: 'eliminated',
+      id: 'ana',
+      discards: ['Priest', 'Baron', 'Guard'],
+    });
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
+      active('beto', 'King'),
+    );
+  });
+
+  it('el objetivo con la carta más baja queda eliminado', () => {
+    const round = playingBaron([active('ana', 'King'), active('beto', 'Guard')]);
+    const state = game([ANA, BETO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Baron',
+      target: 'beto',
+    });
+
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual({
+      status: 'eliminated',
+      id: 'beto',
+      discards: ['Guard'],
+    });
+    expect(next.round.players.find((candidate) => candidate.id === 'ana')).toEqual(
+      active('ana', 'King', { discards: ['Baron'] }),
+    );
+  });
+
+  it('un empate no elimina a nadie', () => {
+    const round = playingBaron([active('ana', 'King'), active('beto', 'King')]);
+    const state = game([ANA, BETO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Baron',
+      target: 'beto',
+    });
+
+    expect(next.round.players.find((candidate) => candidate.id === 'ana')).toEqual(
+      active('ana', 'King', { discards: ['Baron'] }),
+    );
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
+      active('beto', 'King'),
+    );
+  });
+});
+
+describe('la comparación del Barón solo la conocen los dos implicados', () => {
+  it('los dos implicados conocen ambas cartas', () => {
+    const round = playingBaron([active('ana', 'King'), active('beto', 'Guard')]);
+    const state = game([ANA, BETO], round);
+
+    const { events, state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Baron',
+      target: 'beto',
+    });
+
+    const compared = {
+      type: 'BaronCompared',
+      player: 'ana',
+      target: 'beto',
+      playerCard: 'King',
+      targetCard: 'Guard',
+      audience: ['ana', 'beto'],
+    };
+    expect(events).toContainEqual(compared);
+    expect(project(next, 'ana').log).toContainEqual(compared);
+    expect(project(next, 'beto').log).toContainEqual(compared);
+  });
+
+  it('un tercero no ve la comparación', () => {
+    const round = playingBaron([
+      active('ana', 'King'),
+      active('beto', 'Guard'),
+      active('caro', 'Priest'),
+    ]);
+    const state = game([ANA, BETO, CARO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Baron',
+      target: 'beto',
+    });
+
+    const caroLog = project(next, 'caro').log;
+    expect(caroLog.some((event) => event.type === 'BaronCompared')).toBe(false);
+    expect(JSON.stringify(caroLog)).not.toContain('BaronCompared');
+  });
+
+  it('un empate es indistinguible de un Barón sin objetivo legal para un tercero', () => {
+    const round = playingBaron([
+      active('ana', 'King'),
+      active('beto', 'King'),
+      active('caro', 'Priest'),
+    ]);
+    const state = game([ANA, BETO, CARO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Baron',
+      target: 'beto',
+    });
+
+    // Mismo par de eventos que vería un tercero ante un Barón sin ningún objetivo legal.
+    expect(project(next, 'caro').log).toEqual([
+      { type: 'CardDiscarded', player: 'ana', card: 'Baron', audience: 'public' },
+      { type: 'TurnChanged', player: 'beto', audience: 'public' },
+    ]);
+  });
+});
+
+describe('la Sirvienta protege a quien la juega de inmediato', () => {
+  it('el propio estado y la vista de un rival lo muestran protegido', () => {
+    const round = playingHandmaid([active('ana', 'King'), active('beto', 'Guard')]);
+    const state = game([ANA, BETO], round);
+
+    const { state: next, events } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Handmaid',
+    });
+
+    expect(events).toEqual([
+      { type: 'CardDiscarded', player: 'ana', card: 'Handmaid', audience: 'public' },
+      { type: 'TurnChanged', player: 'beto', audience: 'public' },
+    ]);
+    expect(next.round.players.find((candidate) => candidate.id === 'ana')).toMatchObject({
+      protected: true,
+    });
+    expect(project(next, 'beto').players.find((seat) => seat.id === 'ana')).toMatchObject({
+      protected: true,
+    });
   });
 });

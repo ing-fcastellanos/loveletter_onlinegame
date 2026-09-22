@@ -7,10 +7,12 @@
  * `DECK_COMPOSITION` en `cards.ts`— así que agregar un personaje sin declarar su efecto no
  * compila.
  *
- * El Guardia y el Sacerdote ya tienen efecto real (issue #14): el resto sigue apuntando a
- * `noEffect`. Los issues #15 a #17 reemplazan, uno a uno, cada entrada restante.
+ * El Guardia y el Sacerdote tienen efecto real desde el issue #14; el Barón y la Sirvienta
+ * desde el #15. Príncipe, Rey, Condesa y Princesa siguen apuntando a `noEffect`: el #16 y el
+ * #17 reemplazan, uno a uno, cada entrada restante.
  */
 
+import { CARD } from './cards.ts';
 import type { CardName } from './cards.ts';
 import type { GameEvent } from './event.ts';
 import { err, ok } from './result.ts';
@@ -137,11 +139,77 @@ function resolvePriest(state: GameState, player: PlayerId, params: EffectParams)
   return ok({ state: { ...state, log: [...state.log, peeked] }, events: [peeked] });
 }
 
+/**
+ * A diferencia del Guardia, el objetivo del Barón nunca se hace público: solo el evento
+ * `BaronCompared`, restringido a los dos implicados, lo nombra. Un tercero solo se entera de
+ * algo si hay eliminación, vía el `PlayerEliminated` público que ya existe (issue #14) — así
+ * que un empate es indistinguible de un Barón sin ningún objetivo legal para cualquiera que
+ * no sea uno de los dos implicados.
+ */
+function resolveBaron(state: GameState, player: PlayerId, params: EffectParams): EffectResult {
+  const resolved = resolveTarget(state.round, player, params.target);
+  if (!resolved.ok) {
+    return resolved;
+  }
+  const target = resolved.value;
+  if (target === null) {
+    return ok({ state, events: [] });
+  }
+
+  const self = requireActive(state.round, player);
+  const compared: GameEvent = {
+    type: 'BaronCompared',
+    player,
+    target: target.id,
+    playerCard: self.held,
+    targetCard: target.held,
+    audience: [player, target.id],
+  };
+
+  if (CARD[self.held] === CARD[target.held]) {
+    return ok({ state: { ...state, log: [...state.log, compared] }, events: [compared] });
+  }
+
+  const loser = CARD[self.held] < CARD[target.held] ? self : target;
+  const players = state.round.players.map((candidate) =>
+    candidate.id === loser.id ? eliminate(loser) : candidate,
+  );
+  const playerEliminated: GameEvent = {
+    type: 'PlayerEliminated',
+    player: loser.id,
+    audience: 'public',
+  };
+
+  return ok({
+    state: {
+      ...state,
+      round: { ...state.round, players },
+      log: [...state.log, compared, playerEliminated],
+    },
+    events: [compared, playerEliminated],
+  });
+}
+
+/**
+ * Marca a quien juega como protegido. No genera ningún evento propio: la protección de un
+ * rival ya se proyecta en vivo en `PlayerView` desde el estado, no desde el log (issue #15).
+ * El avance de turno en `command.ts` es quien la limpia, al inicio del turno siguiente de
+ * quien la jugó.
+ */
+function resolveHandmaid(state: GameState, player: PlayerId, _params: EffectParams): EffectResult {
+  const self = requireActive(state.round, player);
+  const players = state.round.players.map((candidate) =>
+    candidate.id === self.id ? { ...self, protected: true } : candidate,
+  );
+
+  return ok({ state: { ...state, round: { ...state.round, players } }, events: [] });
+}
+
 export const EFFECTS = {
   Guard: resolveGuard,
   Priest: resolvePriest,
-  Baron: noEffect,
-  Handmaid: noEffect,
+  Baron: resolveBaron,
+  Handmaid: resolveHandmaid,
   Prince: noEffect,
   King: noEffect,
   Countess: noEffect,
