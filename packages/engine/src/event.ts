@@ -5,6 +5,10 @@
  * en vez de mantener una estructura aparte de "quién sabe qué". `type` como discriminante,
  * no `status` ni `stage`: un evento es un mensaje, no un estado — la misma convención que
  * ya fija `Command`.
+ *
+ * `BaronCompared` (issue #15) es el segundo evento con audiencia restringida a una lista
+ * explícita, después de `PriestPeeked`: a diferencia del Guardia, el objetivo del Barón no
+ * se hace público en ningún evento, ni siquiera en un empate.
  */
 
 import type { CardName } from './cards.ts';
@@ -50,4 +54,13 @@ export type GameEvent =
       /** Solo quien jugó el Sacerdote — ni siquiera el propio objetivo. */
       readonly audience: readonly PlayerId[];
     }
-  | { readonly type: 'PlayerEliminated'; readonly player: PlayerId; readonly audience: 'public' };
+  | { readonly type: 'PlayerEliminated'; readonly player: PlayerId; readonly audience: 'public' }
+  | {
+      readonly type: 'BaronCompared';
+      readonly player: PlayerId;
+      readonly target: PlayerId;
+      readonly playerCard: CardName;
+      readonly targetCard: CardName;
+      /** Siempre `[player, target]` — ningún tercero, ni siquiera en empate. */
+      readonly audience: readonly PlayerId[];
+    };

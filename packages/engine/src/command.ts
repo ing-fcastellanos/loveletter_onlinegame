@@ -6,8 +6,12 @@
  * turno, luego que la fase admita el comando, y solo entonces lo específico de cada uno
  * (mazo con cartas para robar; la carta pedida, en mano, para descartar). Descartar aplica
  * el descarte y después resuelve el efecto de la carta (`EFFECTS`, issue #13) antes de
- * avanzar el turno: ningún efecto real está implementado todavía, así que el resultado
- * observable sigue siendo el mismo que en #12.
+ * avanzar el turno.
+ *
+ * Avanzar el turno también limpia la protección de quien entra (issue #15): "protegido hasta
+ * tu turno siguiente" es una propiedad de CUÁNDO vuelve a tocarle, no algo que la Sirvienta
+ * pueda dejar programado de antemano. Aplica siempre, no solo cuando se jugó la Sirvienta —
+ * en la práctica es un no-op salvo que haya una protección pendiente de expirar.
  */
 
 import type { CardName } from './cards.ts';
@@ -46,6 +50,16 @@ function nextActivePlayer(round: Round, fromId: PlayerId): PlayerId {
     }
   }
   throw new Error(`Ningún jugador activo al que avanzar el turno desde '${fromId}'.`);
+}
+
+/** Limpia la protección de `id` si la tenía: es un no-op si no estaba protegido. */
+function clearProtection(round: Round, id: PlayerId): Round {
+  const players = round.players.map((candidate) =>
+    candidate.id === id && candidate.status === 'active' && candidate.protected
+      ? { ...candidate, protected: false }
+      : candidate,
+  );
+  return { ...round, players };
 }
 
 function applyDraw(state: GameState, player: PlayerId): Result<Applied, RuleViolation> {
@@ -112,7 +126,7 @@ function applyDiscard(
 
   const next = nextActivePlayer(resolved.value.state.round, player);
   const newRound: Round = {
-    ...resolved.value.state.round,
+    ...clearProtection(resolved.value.state.round, next),
     turn: { stage: 'draw', player: next },
   };
   const turnChanged: GameEvent = { type: 'TurnChanged', player: next, audience: 'public' };
