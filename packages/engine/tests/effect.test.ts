@@ -1,6 +1,6 @@
 /**
  * Efectos de carta (capability `card-effects`): Guardia y Sacerdote (issue #14), Barón y
- * Sirvienta (issue #15).
+ * Sirvienta (issue #15), Príncipe y Rey (issue #16).
  *
  * La primera eliminación de todo el motor y la primera vez que un evento con audiencia
  * restringida tiene un productor real. Los estados de prueba se arman a mano para controlar
@@ -108,6 +108,31 @@ function playingHandmaid(players: readonly ActivePlayer[]): Round {
     faceUp: [],
     players,
     turn: { stage: 'play', player: 'ana', drawn: 'Handmaid' },
+  };
+}
+
+function playingKing(players: readonly ActivePlayer[]): Round {
+  return {
+    number: 1,
+    deck: [],
+    setAside: 'Princess',
+    faceUp: [],
+    players,
+    turn: { stage: 'play', player: 'ana', drawn: 'King' },
+  };
+}
+
+function playingPrince(
+  players: readonly ActivePlayer[],
+  opts: { deck?: readonly CardName[]; setAside?: CardName } = {},
+): Round {
+  return {
+    number: 1,
+    deck: opts.deck ?? ['Countess'],
+    setAside: opts.setAside ?? 'Princess',
+    faceUp: [],
+    players,
+    turn: { stage: 'play', player: 'ana', drawn: 'Prince' },
   };
 }
 
@@ -539,5 +564,283 @@ describe('la Sirvienta protege a quien la juega de inmediato', () => {
     expect(project(next, 'beto').players.find((seat) => seat.id === 'ana')).toMatchObject({
       protected: true,
     });
+  });
+});
+
+describe('el Rey exige un objetivo activo, no protegido y distinto de quien juega', () => {
+  it('un objetivo protegido es ilegal si hay otro disponible', () => {
+    const round = playingKing([
+      active('ana', 'Priest'),
+      active('beto', 'Baron', { protected: true }),
+      active('caro', 'Guard'),
+    ]);
+    const state = game([ANA, BETO, CARO], round);
+
+    expect(
+      rejected(state, { type: 'Discard', playerId: 'ana', card: 'King', target: 'beto' }),
+    ).toEqual({ code: 'IllegalTarget', player: 'ana', target: 'beto' });
+  });
+
+  it('apuntarse a uno mismo es ilegal si hay otro objetivo disponible', () => {
+    const round = playingKing([active('ana', 'Priest'), active('beto', 'Baron')]);
+    const state = game([ANA, BETO], round);
+
+    expect(
+      rejected(state, { type: 'Discard', playerId: 'ana', card: 'King', target: 'ana' }),
+    ).toEqual({ code: 'IllegalTarget', player: 'ana', target: 'ana' });
+  });
+});
+
+describe('el Rey se descarta sin efecto si no hay ningún objetivo legal', () => {
+  it('sin objetivo legal, el descarte no cambia nada más', () => {
+    const round = playingKing([
+      active('ana', 'Priest'),
+      active('beto', 'Baron', { protected: true }),
+    ]);
+    const state = game([ANA, BETO], round);
+
+    const { state: next, events } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'King',
+    });
+
+    expect(events).toEqual([
+      { type: 'CardDiscarded', player: 'ana', card: 'King', audience: 'public' },
+      { type: 'TurnChanged', player: 'beto', audience: 'public' },
+    ]);
+    // El turno pasa a beto: su protección expira al empezar SU turno (issue #15), no por el
+    // fizzle del Rey en sí.
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
+      active('beto', 'Baron', { protected: false }),
+    );
+  });
+});
+
+describe('el Rey intercambia la carta de quien juega con la del objetivo', () => {
+  it('cada quien termina con la carta del otro', () => {
+    const round = playingKing([active('ana', 'Priest'), active('beto', 'Baron')]);
+    const state = game([ANA, BETO], round);
+
+    const { state: next, events } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'King',
+      target: 'beto',
+    });
+
+    expect(events).toEqual([
+      { type: 'CardDiscarded', player: 'ana', card: 'King', audience: 'public' },
+      { type: 'TurnChanged', player: 'beto', audience: 'public' },
+    ]);
+    // El descarte del propio Rey ya quedó en `discards` antes de resolver el efecto (issue
+    // #13); el intercambio solo toca `held`.
+    expect(next.round.players.find((candidate) => candidate.id === 'ana')).toEqual(
+      active('ana', 'Baron', { discards: ['King'] }),
+    );
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
+      active('beto', 'Priest'),
+    );
+  });
+});
+
+describe('el intercambio del Rey no revela ninguna de las dos manos a un tercero', () => {
+  it('cada implicado ve su nueva carta; nadie más ve ninguna de las dos', () => {
+    const round = playingKing([
+      active('ana', 'Priest'),
+      active('beto', 'Baron'),
+      active('caro', 'Guard'),
+    ]);
+    const state = game([ANA, BETO, CARO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'King',
+      target: 'beto',
+    });
+
+    expect(project(next, 'ana').players.find((seat) => seat.id === 'ana')).toMatchObject({
+      hand: ['Baron'],
+    });
+    expect(project(next, 'beto').players.find((seat) => seat.id === 'beto')).toMatchObject({
+      hand: ['Priest'],
+    });
+
+    const caroView = project(next, 'caro');
+    expect(JSON.stringify(caroView)).not.toContain('Priest');
+    expect(JSON.stringify(caroView)).not.toContain('Baron');
+  });
+});
+
+describe('el Príncipe siempre tiene un objetivo legal, porque uno mismo lo es siempre', () => {
+  it('apuntarse a uno mismo siempre es legal, aunque haya otro objetivo disponible', () => {
+    const round = playingPrince([active('ana', 'Guard'), active('beto', 'Priest')], {
+      deck: ['Countess'],
+    });
+    const state = game([ANA, BETO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Prince',
+      target: 'ana',
+    });
+
+    expect(next.round.players.find((candidate) => candidate.id === 'ana')).toEqual(
+      active('ana', 'Countess', { discards: ['Prince', 'Guard'] }),
+    );
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
+      active('beto', 'Priest'),
+    );
+  });
+
+  it('omitir el objetivo se rechaza', () => {
+    const round = playingPrince([active('ana', 'Guard'), active('beto', 'Priest')]);
+    const state = game([ANA, BETO], round);
+
+    expect(rejected(state, { type: 'Discard', playerId: 'ana', card: 'Prince' })).toEqual({
+      code: 'MissingTarget',
+      player: 'ana',
+    });
+  });
+
+  it('apuntar a un rival protegido es ilegal', () => {
+    const round = playingPrince([
+      active('ana', 'Guard'),
+      active('beto', 'Priest', { protected: true }),
+    ]);
+    const state = game([ANA, BETO], round);
+
+    expect(
+      rejected(state, { type: 'Discard', playerId: 'ana', card: 'Prince', target: 'beto' }),
+    ).toEqual({ code: 'IllegalTarget', player: 'ana', target: 'beto' });
+  });
+});
+
+describe('cuando todos los rivales están protegidos, apuntarse a sí mismo con el Príncipe es la única jugada legal', () => {
+  it('apuntar al único rival protegido se rechaza', () => {
+    const round = playingPrince([
+      active('ana', 'Guard'),
+      active('beto', 'Priest', { protected: true }),
+    ]);
+    const state = game([ANA, BETO], round);
+
+    expect(
+      rejected(state, { type: 'Discard', playerId: 'ana', card: 'Prince', target: 'beto' }),
+    ).toEqual({ code: 'IllegalTarget', player: 'ana', target: 'beto' });
+  });
+
+  it('apuntarse a uno mismo se acepta', () => {
+    const round = playingPrince(
+      [active('ana', 'Guard'), active('beto', 'Priest', { protected: true })],
+      { deck: ['Countess'] },
+    );
+    const state = game([ANA, BETO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Prince',
+      target: 'ana',
+    });
+
+    expect(next.round.players.find((candidate) => candidate.id === 'ana')).toEqual(
+      active('ana', 'Countess', { discards: ['Prince', 'Guard'] }),
+    );
+  });
+});
+
+describe('el objetivo del Príncipe descarta su carta y roba otra, sin disparar el efecto de la carta forzada', () => {
+  it('el objetivo termina con una carta nueva', () => {
+    const round = playingPrince([active('ana', 'Guard'), active('beto', 'Priest')], {
+      deck: ['Countess'],
+    });
+    const state = game([ANA, BETO], round);
+
+    const { state: next, events } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Prince',
+      target: 'beto',
+    });
+
+    expect(events).toEqual([
+      { type: 'CardDiscarded', player: 'ana', card: 'Prince', audience: 'public' },
+      { type: 'CardDiscarded', player: 'beto', card: 'Priest', audience: 'public' },
+      { type: 'CardDrawn', player: 'beto', card: 'Countess', audience: ['beto'] },
+      { type: 'TurnChanged', player: 'beto', audience: 'public' },
+    ]);
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
+      active('beto', 'Countess', { discards: ['Priest'] }),
+    );
+  });
+
+  it('la carta forzada no dispara su propio efecto', () => {
+    const round = playingPrince([active('ana', 'Priest'), active('beto', 'Guard')], {
+      deck: ['Countess'],
+    });
+    const state = game([ANA, BETO], round);
+
+    const { events } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Prince',
+      target: 'beto',
+    });
+
+    expect(events.some((event) => event.type === 'GuardGuessed')).toBe(false);
+  });
+});
+
+describe('con el mazo vacío, el Príncipe entrega la carta apartada al inicio de la ronda', () => {
+  it('el objetivo recibe la carta apartada', () => {
+    const round = playingPrince([active('ana', 'Guard'), active('beto', 'Priest')], {
+      deck: [],
+      setAside: 'King',
+    });
+    const state = game([ANA, BETO], round);
+
+    const { state: next } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Prince',
+      target: 'beto',
+    });
+
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual(
+      active('beto', 'King', { discards: ['Priest'] }),
+    );
+    expect(next.round.deck).toEqual([]);
+  });
+});
+
+describe('si el Príncipe fuerza el descarte de la Princesa, el objetivo queda eliminado', () => {
+  it('el objetivo queda eliminado sin robar ninguna carta', () => {
+    const round = playingPrince([active('ana', 'Guard'), active('beto', 'Princess')], {
+      deck: ['Countess'],
+    });
+    const state = game([ANA, BETO], round);
+
+    const { state: next, events } = applied(state, {
+      type: 'Discard',
+      playerId: 'ana',
+      card: 'Prince',
+      target: 'beto',
+    });
+
+    expect(events).toEqual([
+      { type: 'CardDiscarded', player: 'ana', card: 'Prince', audience: 'public' },
+      { type: 'CardDiscarded', player: 'beto', card: 'Princess', audience: 'public' },
+      { type: 'PlayerEliminated', player: 'beto', audience: 'public' },
+      { type: 'TurnChanged', player: 'ana', audience: 'public' },
+    ]);
+    expect(next.round.players.find((candidate) => candidate.id === 'beto')).toEqual({
+      status: 'eliminated',
+      id: 'beto',
+      discards: ['Princess'],
+    });
+    // No se le entregó la carta del mazo: la Princesa forzada elimina antes de robar.
+    expect(next.round.deck).toEqual(['Countess']);
   });
 });

@@ -3,8 +3,9 @@
  * el efecto de la carta entre el descarte y el avance de turno (capability `effect-dispatch`,
  * issue #13).
  *
- * El Guardia y el Sacerdote ya tienen efecto real (issue #14, ver `effect.test.ts`); el resto
- * sigue sin implementar — descartarlas es un descarte más, sin cambiar nada adicional. Los
+ * Guardia, Sacerdote (issue #14), Barón, Sirvienta (issue #15), Príncipe y Rey (issue #16) ya
+ * tienen efecto real — su cobertura vive en `effect.test.ts`, no aquí. Condesa y Princesa
+ * siguen sin implementar: descartarlas es un descarte más, sin cambiar nada adicional. Los
  * estados de prueba se arman a mano para controlar exactamente la fase del turno y quién está
  * eliminado, igual que en #10/#11.
  */
@@ -78,7 +79,7 @@ const DRAW_ROUND: Round = {
   deck: ['Guard', 'Priest'],
   setAside: 'Princess',
   faceUp: [],
-  players: [active('ana', 'King'), active('beto', 'Baron')],
+  players: [active('ana', 'Countess'), active('beto', 'Baron')],
   turn: { stage: 'draw', player: 'ana' },
 };
 
@@ -124,7 +125,7 @@ describe('descartar exige haber robado', () => {
   it('descartar antes de robar se rechaza', () => {
     const state = game([ANA, BETO], DRAW_ROUND);
 
-    expect(rejected(state, { type: 'Discard', playerId: 'ana', card: 'King' })).toEqual({
+    expect(rejected(state, { type: 'Discard', playerId: 'ana', card: 'Countess' })).toEqual({
       code: 'MustDrawFirst',
       player: 'ana',
     });
@@ -179,17 +180,17 @@ describe('descartar dispensa la carta elegida y conserva la otra', () => {
   it('la carta descartada se suma a los descartes del jugador', () => {
     const state = game([ANA, BETO], PLAY_ROUND);
 
-    const { state: next } = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+    const { state: next } = applied(state, { type: 'Discard', playerId: 'ana', card: 'Countess' });
 
     expect(next.round.players.find((candidate) => candidate.id === 'ana')).toMatchObject({
-      discards: ['King'],
+      discards: ['Countess'],
     });
   });
 
   it('la carta no descartada queda como la única en mano', () => {
     const state = game([ANA, BETO], PLAY_ROUND);
 
-    const { state: next } = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+    const { state: next } = applied(state, { type: 'Discard', playerId: 'ana', card: 'Countess' });
 
     expect(next.round.players.find((candidate) => candidate.id === 'ana')).toMatchObject({
       status: 'active',
@@ -204,11 +205,11 @@ describe('descartar avanza el turno al siguiente jugador activo', () => {
   it('el turno pasa al siguiente jugador activo en orden de asiento', () => {
     const round: Round = {
       ...PLAY_ROUND,
-      players: [active('ana', 'King'), active('beto', 'Baron'), active('caro', 'Priest')],
+      players: [active('ana', 'Countess'), active('beto', 'Baron'), active('caro', 'Priest')],
     };
     const state = game([ANA, BETO, CARO], round);
 
-    const { state: next } = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+    const { state: next } = applied(state, { type: 'Discard', playerId: 'ana', card: 'Countess' });
 
     expect(next.round.turn).toEqual({ stage: 'draw', player: 'beto' });
   });
@@ -216,11 +217,11 @@ describe('descartar avanza el turno al siguiente jugador activo', () => {
   it('un jugador eliminado se salta al avanzar el turno', () => {
     const round: Round = {
       ...PLAY_ROUND,
-      players: [active('ana', 'King'), eliminated('beto', ['Guard']), active('caro', 'Priest')],
+      players: [active('ana', 'Countess'), eliminated('beto', ['Guard']), active('caro', 'Priest')],
     };
     const state = game([ANA, BETO, CARO], round);
 
-    const { state: next } = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+    const { state: next } = applied(state, { type: 'Discard', playerId: 'ana', card: 'Countess' });
 
     expect(next.round.turn).toEqual({ stage: 'draw', player: 'caro' });
   });
@@ -236,7 +237,7 @@ describe('la protección de la Sirvienta expira al empezar el turno de quien la 
       setAside: 'Princess',
       faceUp: [],
       players: [
-        active('ana', 'King'),
+        active('ana', 'Countess'),
         active('beto', 'Baron', { protected: true }),
         active('caro', 'Priest'),
       ],
@@ -260,7 +261,7 @@ describe('la protección de la Sirvienta expira al empezar el turno de quien la 
       setAside: 'Princess',
       faceUp: [],
       players: [
-        active('ana', 'King'),
+        active('ana', 'Countess'),
         active('beto', 'Baron', { protected: true }),
         active('caro', 'Priest'),
       ],
@@ -292,10 +293,10 @@ describe('cada comando produce sus eventos con la audiencia correcta', () => {
   it('descartar produce sus dos eventos públicos', () => {
     const state = game([ANA, BETO], PLAY_ROUND);
 
-    const { events } = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+    const { events } = applied(state, { type: 'Discard', playerId: 'ana', card: 'Countess' });
 
     expect(events).toEqual([
-      { type: 'CardDiscarded', player: 'ana', card: 'King', audience: 'public' },
+      { type: 'CardDiscarded', player: 'ana', card: 'Countess', audience: 'public' },
       { type: 'TurnChanged', player: 'beto', audience: 'public' },
     ]);
   });
@@ -352,13 +353,17 @@ describe('una ronda se juega por turnos hasta vaciar el mazo', () => {
       const heldCard = activePlayer.held;
       const drawnCard = turn.drawn;
 
-      // El Guardia, el Sacerdote (issue #14), el Barón y la Sirvienta (issue #15) exigen un
-      // objetivo o cambian algo más allá del descarte. Con dos jugadores el rival siempre es
-      // el único objetivo legal, salvo que esté protegido por la Sirvienta. Para el Guardia se
-      // adivina a propósito una carta que el rival no tiene, y el Barón se evita cuando
-      // eliminaría al único rival (dejaría a un solo jugador activo, un estado que #19 todavía
-      // no sabe cerrar): esta prueba solo verifica que una ronda se puede jugar de punta a
-      // punta, no el resultado de adivinar o comparar.
+      // El Guardia, el Sacerdote (issue #14), el Barón, la Sirvienta (issue #15), el Príncipe y
+      // el Rey (issue #16) exigen un objetivo o cambian algo más allá del descarte. Con dos
+      // jugadores el rival siempre es el único objetivo legal, salvo que esté protegido por la
+      // Sirvienta. Para el Guardia se adivina a propósito una carta que el rival no tiene, y el
+      // Barón se evita cuando eliminaría al único rival (dejaría a un solo jugador activo, un
+      // estado que #19 todavía no sabe cerrar): esta prueba solo verifica que una ronda se
+      // puede jugar de punta a punta, no el resultado de adivinar o comparar. El Príncipe
+      // apunta al rival si no está protegido, o a uno mismo si lo está o no queda ninguno —
+      // incluida la posibilidad de que fuerce su propia eliminación al descartar la Princesa,
+      // el mismo riesgo ya aceptado para el Barón: sin fin de ronda (#19) el juego sigue de
+      // forma rara en vez de terminar, pero no se cae.
       const opponent = state.round.players.find(
         (candidate): candidate is ActivePlayer =>
           candidate.id !== currentPlayer && candidate.status === 'active',
@@ -385,9 +390,15 @@ describe('una ronda se juega por turnos hasta vaciar el mazo', () => {
       const targetParams: { readonly target?: PlayerId; readonly guess?: CardName } =
         cardToDiscard === 'Guard' && opponent !== undefined
           ? { target: opponent.id, guess: opponent.held === 'Priest' ? 'Baron' : 'Priest' }
-          : (cardToDiscard === 'Priest' || cardToDiscard === 'Baron') && opponent !== undefined
+          : (cardToDiscard === 'Priest' || cardToDiscard === 'Baron' || cardToDiscard === 'King') &&
+              opponent !== undefined
             ? { target: opponent.id }
-            : {};
+            : cardToDiscard === 'Prince'
+              ? {
+                  target:
+                    opponent !== undefined && !opponent.protected ? opponent.id : currentPlayer,
+                }
+              : {};
 
       const command: Command = {
         type: 'Discard',
@@ -412,11 +423,18 @@ describe('una ronda se juega por turnos hasta vaciar el mazo', () => {
 
 describe('cada personaje sin efecto implementado se descarta sin cambios adicionales', () => {
   it('descartar cualquiera de las cartas sin efecto todavía no cambia el estado más allá del descarte', () => {
-    // El Guardia, el Sacerdote (issue #14), el Barón y la Sirvienta (issue #15) ya tienen
-    // efecto real: su cobertura vive en effect.test.ts, no aquí — descartarlos exige un
-    // objetivo o cambia algo más allá del descarte, así que ya no son "sin efecto".
+    // El Guardia, el Sacerdote (issue #14), el Barón, la Sirvienta (issue #15), el Príncipe y
+    // el Rey (issue #16) ya tienen efecto real: su cobertura vive en effect.test.ts, no aquí —
+    // descartarlos exige un objetivo o cambia algo más allá del descarte, así que ya no son
+    // "sin efecto".
     const withoutEffect = (Object.keys(CARD) as CardName[]).filter(
-      (card) => card !== 'Guard' && card !== 'Priest' && card !== 'Baron' && card !== 'Handmaid',
+      (card) =>
+        card !== 'Guard' &&
+        card !== 'Priest' &&
+        card !== 'Baron' &&
+        card !== 'Handmaid' &&
+        card !== 'Prince' &&
+        card !== 'King',
     );
     for (const card of withoutEffect) {
       const other: CardName = 'Guard';
@@ -448,10 +466,10 @@ describe('descartar acepta los parámetros del efecto de la carta', () => {
   it('descartar sin objetivo ni carta adivinada sigue siendo válido', () => {
     const state = game([ANA, BETO], PLAY_ROUND);
 
-    const { events } = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+    const { events } = applied(state, { type: 'Discard', playerId: 'ana', card: 'Countess' });
 
     expect(events).toEqual([
-      { type: 'CardDiscarded', player: 'ana', card: 'King', audience: 'public' },
+      { type: 'CardDiscarded', player: 'ana', card: 'Countess', audience: 'public' },
       { type: 'TurnChanged', player: 'beto', audience: 'public' },
     ]);
   });
@@ -459,11 +477,11 @@ describe('descartar acepta los parámetros del efecto de la carta', () => {
   it('con objetivo y carta adivinada, el resultado es el mismo que sin ellos', () => {
     const state = game([ANA, BETO], PLAY_ROUND);
 
-    const withoutParams = applied(state, { type: 'Discard', playerId: 'ana', card: 'King' });
+    const withoutParams = applied(state, { type: 'Discard', playerId: 'ana', card: 'Countess' });
     const withParams = applied(state, {
       type: 'Discard',
       playerId: 'ana',
-      card: 'King',
+      card: 'Countess',
       target: 'beto',
       guess: 'Guard',
     });

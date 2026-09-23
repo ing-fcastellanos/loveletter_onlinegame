@@ -8,8 +8,8 @@
  * compila.
  *
  * El Guardia y el Sacerdote tienen efecto real desde el issue #14; el Barón y la Sirvienta
- * desde el #15. Príncipe, Rey, Condesa y Princesa siguen apuntando a `noEffect`: el #16 y el
- * #17 reemplazan, uno a uno, cada entrada restante.
+ * desde el #15; el Príncipe y el Rey desde el #16. Condesa y Princesa siguen apuntando a
+ * `noEffect`: el #17 reemplaza esas dos entradas restantes.
  */
 
 import { CARD } from './cards.ts';
@@ -205,13 +205,148 @@ function resolveHandmaid(state: GameState, player: PlayerId, _params: EffectPara
   return ok({ state: { ...state, round: { ...state.round, players } }, events: [] });
 }
 
+/**
+ * Objetivo legal para el Príncipe: uno mismo SIEMPRE lo es, además de cualquier otro activo
+ * no protegido — a diferencia de `legalTargets`, que excluye a `self` por diseño (issue #16).
+ * Por construcción nunca es vacía, así que el Príncipe nunca se descarta "sin efecto".
+ */
+function legalTargetsForPrince(round: Round, self: PlayerId): readonly PlayerId[] {
+  return round.players
+    .filter(
+      (candidate): candidate is ActivePlayer =>
+        candidate.status === 'active' && (candidate.id === self || !candidate.protected),
+    )
+    .map((candidate) => candidate.id);
+}
+
+/**
+ * A diferencia de `resolveTarget`, nunca hay fizzle: `legalTargetsForPrince` siempre incluye
+ * al menos a `self`. Omitir el objetivo siempre es `MissingTarget` — el motor exige el
+ * auto-objetivo explícito, no lo asume ni lo sugiere, incluso cuando es la única jugada legal.
+ */
+function resolvePrinceTarget(
+  round: Round,
+  player: PlayerId,
+  target: PlayerId | undefined,
+): Result<ActivePlayer, RuleViolation> {
+  const targets = legalTargetsForPrince(round, player);
+  if (target === undefined) {
+    return err({ code: 'MissingTarget', player });
+  }
+  if (!targets.includes(target)) {
+    return err({ code: 'IllegalTarget', player, target });
+  }
+  return ok(requireActive(round, target));
+}
+
+/**
+ * El objetivo (puede ser uno mismo) descarta su carta y roba otra — del mazo, o de la carta
+ * apartada si el mazo está vacío. Si la carta forzada es la Princesa, el objetivo queda
+ * eliminado y no roba nada. La carta forzada NO dispara su propio efecto: solo el de la
+ * Princesa está codificado aquí, porque es el único caso especial que pide el issue #16.
+ *
+ * Un objetivo que resulta ser quien juega no necesita ningún caso especial: `applyDiscard`
+ * ya redujo a quien juega a una sola `held` antes de despachar el efecto (issue #13), así
+ * que el objetivo —sea quien sea— siempre tiene exactamente una carta en este punto.
+ */
+function resolvePrince(state: GameState, player: PlayerId, params: EffectParams): EffectResult {
+  const resolved = resolvePrinceTarget(state.round, player, params.target);
+  if (!resolved.ok) {
+    return resolved;
+  }
+  const target = resolved.value;
+
+  const forcedCard = target.held;
+  const cardDiscarded: GameEvent = {
+    type: 'CardDiscarded',
+    player: target.id,
+    card: forcedCard,
+    audience: 'public',
+  };
+
+  if (forcedCard === 'Princess') {
+    // `eliminate` ya suma `target.held` a `target.discards`: no se agrega la carta forzada
+    // por separado, o quedaría duplicada.
+    const players = state.round.players.map((candidate) =>
+      candidate.id === target.id ? eliminate(target) : candidate,
+    );
+    const playerEliminated: GameEvent = {
+      type: 'PlayerEliminated',
+      player: target.id,
+      audience: 'public',
+    };
+
+    return ok({
+      state: {
+        ...state,
+        round: { ...state.round, players },
+        log: [...state.log, cardDiscarded, playerEliminated],
+      },
+      events: [cardDiscarded, playerEliminated],
+    });
+  }
+
+  const { round } = state;
+  const drawnCard = round.deck[0] ?? round.setAside;
+  const newDeck = round.deck.length > 0 ? round.deck.slice(1) : round.deck;
+  const players = round.players.map((candidate) =>
+    candidate.id === target.id
+      ? { ...target, held: drawnCard, discards: [...target.discards, forcedCard] }
+      : candidate,
+  );
+  const cardDrawn: GameEvent = {
+    type: 'CardDrawn',
+    player: target.id,
+    card: drawnCard,
+    audience: [target.id],
+  };
+
+  return ok({
+    state: {
+      ...state,
+      round: { ...round, deck: newDeck, players },
+      log: [...state.log, cardDiscarded, cardDrawn],
+    },
+    events: [cardDiscarded, cardDrawn],
+  });
+}
+
+/**
+ * Intercambia la carta de quien juega con la del objetivo. No genera ningún evento propio:
+ * cada mano ya se proyecta en vivo por jugador vía `handOf`/`view.ts` (issue #16), y a
+ * diferencia del Barón no hay ningún resultado sensible que ocultar.
+ */
+function resolveKing(state: GameState, player: PlayerId, params: EffectParams): EffectResult {
+  const resolved = resolveTarget(state.round, player, params.target);
+  if (!resolved.ok) {
+    return resolved;
+  }
+  const target = resolved.value;
+  if (target === null) {
+    return ok({ state, events: [] });
+  }
+
+  const self = requireActive(state.round, player);
+  const players = state.round.players.map((candidate) => {
+    if (candidate.id === self.id) {
+      return { ...self, held: target.held };
+    }
+    if (candidate.id === target.id) {
+      return { ...target, held: self.held };
+    }
+    return candidate;
+  });
+
+  return ok({ state: { ...state, round: { ...state.round, players } }, events: [] });
+}
+
 export const EFFECTS = {
   Guard: resolveGuard,
   Priest: resolvePriest,
   Baron: resolveBaron,
   Handmaid: resolveHandmaid,
-  Prince: noEffect,
-  King: noEffect,
+  Prince: resolvePrince,
+  King: resolveKing,
   Countess: noEffect,
   Princess: noEffect,
 } as const satisfies Record<CardName, EffectHandler>;
